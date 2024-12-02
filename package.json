@@ -1,0 +1,11 @@
+{
+  "name": "projektwoche-passwortmanager",
+  "version": "1.0.0",
+  "description": "Passwormanager für die Projektwoche an der Berufsschule",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Marcel Weber, Jonas Goldschnitt, Justin Conrad, Khadija Alipour",
+  "license": "ISC"
+}
