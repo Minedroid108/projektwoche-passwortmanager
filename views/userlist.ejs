@@ -13,18 +13,34 @@
             <table class="table is-striped is-fullwidth">
                 <thead>
                     <tr>
-                        <th>Nutzername</th>
-                        <th>Name</th>
+                        <th>Nutzer</th>
+                        <th>Voname</th>
+                        <th>Nachname</th>
+                        <th>Admin Status</th>
                         <th>Abteilung</th>
                         <th>
                             <a href="/addUser"><img src="Icons/addUserIcon.png" width="25" height="25"></a>
                         </th>
                     </tr>
-                    <% users.forEach(function(e) { %>
+                    <% users.forEach(function(user) { %>
                     <tr>
-                        <td><%= e.username %></td>
-                        <td><%= e.name %></td>
-                        <td><%= e.Abteilung %></td>
+                        <td><%= user.Nutzername %></td>
+                        <td><%= user.Vorname %></td>
+                        <td><%= user.Nachname %></td>
+                        <td>
+                            <% if (user.IsAdmin == 0) { %>
+                                Kein Admin
+                            <% } else { %>
+                                Admin
+                            <% } %>
+                        </td>
+                        <td>
+                            <% abteilungen.forEach(function(abteilung) { %>
+                                <% if (abteilung.UserID == user.ID) { %>
+                                    <%= abteilung.Nutzergruppe %>
+                                <% } %>
+                            <% }) %>
+                        </td>
                         <td>
                             <a href=""><img src="Icons/edit.png" width="25" height="25"></a>
                             <a href=""><img src="Icons/trash.png" width="25" height="25"></a>
