@@ -1,1 +1,50 @@
-hello ejs world
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
+    <title>Login</title>
+</head>
+<body>
+    <!-- <section>
+        <nav class="navbar is-primary" role="" aria-label="">
+            <div class="navbar-brand">
+                <a class="navbar-item" href="/">
+                    <img src="public/Images/logo-bkm.png" width="112" height="28">
+                </a>
+            </div>
+        </nav>
+    </section> -->
+    <section class="hero is-fullheight">
+        <div class="hero-body">
+            <div class="container">
+                <div class="columns is-centered">
+                    <div class="column is-4">
+                        <form action="/login" method="POST" class="box">
+                        <img src="/Images/logo-bkm.png" width="300" height="30">
+                            <div class="field">
+                                <label class="label">Nutzername</label>
+                                <div class="control">
+                                    <input class="input" type="text" name="username" placeholder="Username" required>
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label class="label">Passwort</label>
+                                <div class="control">
+                                    <input class="input" type="password" name="password" placeholder="Password" required>
+                                </div>
+                            </div>
+                            <div class="field">
+                                <div class="control">
+                                    <button class="button is-link" type="submit">Anmelden</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</body>
+</html>
