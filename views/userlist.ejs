@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
+    <title>Nutzerliste</title>
+</head>
+<body>
+    <section class="section">
+        <div class="container">
+            <h1 class="title"><img src="Icons/Usericon.png" width="25" height="25">  Nutzerliste</h1>
+            <table class="table is-striped is-fullwidth">
+                <thead>
+                    <tr>
+                        <th>Nutzername</th>
+                        <th>Name</th>
+                        <th>Abteilung</th>
+                        <th>
+                            <a href=""><img src="Icons/addUserIcon.png" width="25" height="25"></a>
+                        </th>
+                    </tr>
+                    <% users.forEach(function(e) { %>
+                    <tr>
+                        <td><%= e.username %></td>
+                        <td><%= e.name %></td>
+                        <td><%= e.Abteilung %></td>
+                        <td>
+                            <a href=""><img src="Icons/edit.png" width="25" height="25"></a>
+                            <a href=""><img src="Icons/trash.png" width="25" height="25"></a>
+                        </td>
+                    </tr>
+                    <% }) %>
+                </thead>
+                <tbody>
+
+                </tbody>
+            </table>
+        </div>
+    </section>
+</body>
+</html>
