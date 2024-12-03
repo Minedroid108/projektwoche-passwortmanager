@@ -23,4 +23,14 @@ app.get('/userlist', (req, res) => {
     res.render('userlist', { users: users });
 });
 
+
+app.get('/passwords', (req, res) => {
+    const passwords = [
+        { webSite: 'example.com', email: 'user@example.com', username: 'user1', password: 'password1' },
+        { webSite: 'example.org', email: 'user2@example.org', username: 'user2', password: 'password2' }
+        // Weitere Passwörter hier hinzufügen
+    ];
+    res.render('passwordView', { password: passwords });
+});
+
 app.listen(3000);
