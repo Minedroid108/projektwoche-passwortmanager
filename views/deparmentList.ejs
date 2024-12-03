@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
+    <title>Abteilungsliste</title>
+    <script>
+        function toggleForm() {
+            var form = document.getElementById('add-department-form');
+            var addButton = document.getElementById('add-button');
+            if (form.style.display === 'none' || form.style.display === '') {
+                form.style.display = 'block';
+                addButton.style.display = 'none';
+            } else {
+                form.style.display = 'none';
+                addButton.style.display = 'block';
+            }
+        }
+    </script>
+</head>
+<body>
+    <section class="section">
+        <div class="container">
+            <h1 class="title"><img src="Icons/group.png" width="25" height="25"> Abteilungsliste</h1>
+            <table class="table is-striped is-fullwidth">
+                <thead>
+                    <tr>
+                        <th>Abteilungsname</th>
+                        <th>Anzahl der Nutzer</th>
+                        <th>
+                            <a href=""><img src="Icons/add.png" width=  "25" height="25"></a>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% deparmentLists.forEach(function(e) { %>
+                    <tr>
+                        <td><%= e.deparmentList %></td>
+                        <td><%= e.quantityOfUser %></td>
+                        <td>
+                            <a href="/editDepartment/<%= e.deparmentList %>"><img src="Icons/edit.png" width="25" height="25"></a>
+                            <a href=""><img src="Icons/trash.png" width="25" height="25"></a>
+                        </td>
+                    </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+            <form id="add-department-form" action="/addDepartment" method="POST" style="display: none;">
+                <div class="field is-horizontal">
+                    <div class="field-label is-normal">
+                        <label class="label">Neuer Abteilungsname</label>
+                    </div>
+                    <div class="field-body">
+                        <div class="field">
+                            <div class="control">
+                                <input class="input" type="text" name="deparmentName" placeholder="Abteilungsname" required>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <div class="control">
+                                <button class="button is-success" type="submit"><img src="Icons/check.png" width="25" height="25"></button>
+                                <button class="button is-danger" type="button" onclick="toggleForm()"><img src="Icons/canceled.png" width="25" height="25"></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </section>
+</body>
+</html>
