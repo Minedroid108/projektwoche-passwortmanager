@@ -33,4 +33,19 @@ app.get('/passwords', (req, res) => {
     res.render('passwordView', { password: passwords });
 });
 
+const passwords = [
+    { webSite: 'example.com', email: 'user@example.com', username: 'user1', password: 'password1' },
+    // Weitere Passwörter hier hinzufügen
+];
+
+app.get('/editPasswords', (req, res) => {
+    res.render('editPasswords', { password: passwords });
+});
+
+app.post('/updatePassword', (req, res) => {
+    // Hier können Sie die Logik zum Aktualisieren des Passworts hinzufügen
+    console.log(req.body);
+    res.redirect('/editPasswords');
+});
+
 app.listen(3000);
