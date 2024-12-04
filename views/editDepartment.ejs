@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
+    <title>Abteilung bearbeiten</title>
+    <script>
+        function removeUser(department, username) {
+            fetch(`/removeUser/${department}/${username}`, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Fehler beim Entfernen des Benutzers');
+                }
+            });
+        }
+    </script>
+</head>
+<body>
+    <section class="section">
+        <div class="container">
+            <h1 class="title"><img src="/Icons/group.png" width="25" height="25"> Abteilung bearbeiten: <%= department.deparmentList %></h1>
+            <table class="table is-striped is-fullwidth">
+                <thead>
+                    <tr>
+                        <th>Nutzername</th>
+                        <th>Voller Name</th>
+                        <th>
+                            <a href=""><img src="/Icons/addUserIcon.png" width="25" height="25"></a>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% department.users.forEach(function(user) { %>
+                    <tr>
+                        <td><%= user.username %></td>
+                        <td><%= user.fullName %></td>
+                        <td>
+                            <a href="javascript:void(0);" onclick="removeUser('<%= department.deparmentList %>', '<%= user.username %>')">
+                                <img src="/Icons/removeUser.png" width="25" height="25">
+                            </a>
+                        </td>
+                    </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+            <a href="/deparmentList" class="button is-link">Zurück zur Abteilungsliste</a>
+        </div>
+    </section>
+</body>
+</html>
