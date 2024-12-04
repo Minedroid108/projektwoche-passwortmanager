@@ -43,6 +43,10 @@ app.get('/addUser', function(req, res) {
 })
 
 app.post('/addUser', function(req, res) {
+    // 
+    // to do: check if user already exists 
+    // 
+
     // get passwords
     const loginPasswort = req.body.loginPasswort;
     const masterPasswort = req.body.masterPasswort;
@@ -114,6 +118,28 @@ app.get('/userlist', async (req, res) => {
         users: users, 
         abteilungen: abteilungen});
 });
+
+app.get('/login', function(req, res) {
+    res.render('login', {
+        title: 'Login'
+    });
+})
+
+app.post('/login', function(req, res) {
+    const username = req.body.username;
+    const password = req.body.password;
+
+    new Promise(async function(resolve, reject) {
+        const queryUsername = "SELECT ID FROM user WHERE Nutzername = ?";
+        const valuesUsername = [ username ];
+        const userID = await executeSQL(queryUsername, valuesUsername); 
+
+        const queryPassword = "SELECT LoginPassword FROM user WHERE ID = ?";
+        const valuesPassword = [ password ];
+        const passwordHash = await executeSQL(queryPassword, valuesPassword); 
+
+    })
+})
 
 // userdata
 app.get('/passwords', (req, res) => {
