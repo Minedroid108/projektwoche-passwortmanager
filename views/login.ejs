@@ -1,34 +1,33 @@
 <%- include('../views/partials/head.ejs') %>
 <body>
-    <section class="hero is-fullheight">
-        <div class="hero-body">
-            <div class="container">
-                <div class="columns is-centered">
-                    <div class="column is-4">
-                        <form action="/login" method="POST" class="box">
-                        <img src="/Images/logo-bkm.png" width="300" height="30">
-                            <div class="field">
-                                <label class="label">Nutzername</label>
-                                <div class="control">
-                                    <input class="input" type="text" name="username" placeholder="Username" required>
-                                </div>
-                            </div>
-                            <div class="field">
-                                <label class="label">Passwort</label>
-                                <div class="control">
-                                    <input class="input" type="password" name="password" placeholder="Password" required>
-                                </div>
-                            </div>
-                            <div class="field">
-                                <div class="control">
-                                    <button href="passwordView.ejs" class="button is-link" type="submit">Anmelden</button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
+  <section class="hero is-fullheight">
+    <div class="hero-body">
+      <div class="container">
+        <div class="columns is-centered">
+          <div class="column is-4">
+            <form action="/passwordView" method="POST" class="box">
+              <img src="/Images/logo-bkm.png" width="300" height="30">
+              <div class="field">
+                <label class="label">Nutzername</label>
+                <div class="control">
+                  <input class="input" type="text" name="username" placeholder="Username" required>
                 </div>
-            </div>
+              </div>
+              <div class="field">
+                <label class="label">Passwort</label>
+                <div class="control">
+                  <input class="input" type="password" name="password" placeholder="Password" required>
+                </div>
+              </div>
+              <div class="field">
+                <div class="control">
+                  <button class="button is-link" type="submit">Anmelden</button>
+                </div>
+              </div>
+            </form>
+          </div>
         </div>
-    </section>
+      </div>
+    </div>
+  </section>
 </body>
-</html>
