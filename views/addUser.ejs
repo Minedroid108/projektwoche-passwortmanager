@@ -1,0 +1,60 @@
+<!--
+<%- include('../views/partials/head.ejs') %>
+<body>
+    <%- include('../views/partials/navbar.ejs') %>
+    <form action="/addUser" method="post">
+        <input type="text" name="nutzername" value="hans_müller">
+        <input type="text" name="vorname" value="Hans">
+        <input type="text" name="nachname" value="Müller">
+        <input type="text" name="isAdmin" value="1">
+        <input type="text" name="loginPasswort" value="123456">
+        <input type="text" name="masterPasswort" value="1234">
+        <input type="submit">
+    </form>
+</body>
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
+    <title>Benutzer erstellen</title>
+</head>
+<body>
+    <section class="section">
+        <div class="container">
+            <h1 class="title">Benutzer erstellen</h1>
+            <form action="/addUser" method="POST">
+                <div class="field">
+                    <label class="label">Nutzername</label>
+                    <div class="control">
+                        <input class="input" type="text" name="username" placeholder="Nutzername" required>
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="label">Name</label>
+                    <div class="control">
+                        <input class="input" type="text" name="name" placeholder="Name" required>
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="label">Abteilung</label>
+                    <div class="control">
+                        <input class="input" type="text" name="Abteilung" placeholder="Abteilung" required>
+                    </div>
+                </div>
+                <div class="field is-grouped">
+                    <div class="control">
+                        <button class="button is-primary" type="submit">Erstellen</button>
+                    </div>
+                    <div class="control">
+                        <a href="/userlist" class="button is-link">Abbrechen</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </section>
+</body>
+</html>
