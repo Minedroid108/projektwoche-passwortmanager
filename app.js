@@ -14,12 +14,16 @@ app.use(express.static('public'));
 const connection = mysql.createConnection({
   host     : '127.0.0.1',
   user     : 'root',
-  password : 'lucario52755',
+  password : 'manager',
   database : 'passwortmanager'
 });
 
 app.get('/', (req, res) => {
     res.render('index');
+})
+
+app.get('/companySettings', (req, res) => {
+    res.render('companySettings');
 })
 
 app.get('/userlist', async (req, res) => {
@@ -38,6 +42,19 @@ app.get('/userlist', async (req, res) => {
     res.render('userlist', { users: users, abteilungen: abteilungen});
 });
 
+app.get('/addUser', (req, res) => {
+    res.render('addUser');
+});
+
+app.post('/addUser', (req, res) => {
+    const newUser = {
+        username: req.body.username,
+        name: req.body.name,
+        Abteilung: req.body.Abteilung
+    };
+    users.push(newUser);
+    res.redirect('/userlist');
+});
 
 app.get('/passwords', (req, res) => {
     const passwords = [
@@ -46,6 +63,46 @@ app.get('/passwords', (req, res) => {
         // Weitere Passwörter hier hinzufügen
     ];
     res.render('passwordView', { password: passwords });
+});
+
+let deparmentLists = [
+    { deparmentList: 'IT', quantityOfUser: 10, users: [{ username: 'user1', fullName: 'User One' }, { username: 'user2', fullName: 'User Two' }] },
+    { deparmentList: 'HR', quantityOfUser: 5, users: [{ username: 'user3', fullName: 'User Three' }, { username: 'user4', fullName: 'User Four' }] }
+    // Weitere Abteilungen hinzufügen
+];
+
+app.get('/deparmentList', (req, res) => {
+    res.render('deparmentList', { deparmentLists: deparmentLists });
+});
+
+app.post('/addDepartment', (req, res) => {
+    const newDepartment = {
+        deparmentList: req.body.deparmentName,
+        quantityOfUser: 0, // Standardwert für neue Abteilungen
+        users: []
+    };
+    deparmentLists.push(newDepartment);
+    res.redirect('/deparmentList');
+});
+
+app.get('/editDepartment/:deparmentList', (req, res) => {
+    const department = deparmentLists.find(d => d.deparmentList === req.params.deparmentList);
+    if (department) {
+        res.render('editDepartment', { department: department });
+    } else {
+        res.status(404).send('Abteilung nicht gefunden');
+    }
+});
+
+app.delete('/removeUser/:deparmentList/:username', (req, res) => {
+    const department = deparmentLists.find(d => d.deparmentList === req.params.deparmentList);
+    if (department) {
+        department.users = department.users.filter(user => user.username !== req.params.username);
+        department.quantityOfUser = department.users.length;
+        res.sendStatus(200);
+    } else {
+        res.status(404).send('Abteilung oder Benutzer nicht gefunden');
+    }
 });
 
 const passwords = [
@@ -62,6 +119,18 @@ app.post('/updatePassword', (req, res) => {
     console.log(req.body);
     res.redirect('/editPasswords');
 });
+
+app.get('/accountView', (req, res) => {
+    const user = {
+        vorname: 'User',
+        nachname: 'One',
+        password: 'password1',
+        masterPassword: 'master1',
+        department: 'IT'
+    };
+    res.render('accountView', { user: user });
+});
+
 function executeSQL(query, values) {
     return new Promise((resolve, reject) => {
         connection.query(query, values, (error, result, fields) => {
