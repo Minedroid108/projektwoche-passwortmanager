@@ -1,0 +1,13 @@
+<%- include('../views/partials/head.ejs') %>
+<body>
+    <%- include('../views/partials/navbar.ejs') %>
+    <form action="/addUser" method="post">
+        <input type="text" name="nutzername" value="hans_müller">
+        <input type="text" name="vorname" value="Hans">
+        <input type="text" name="nachname" value="Müller">
+        <input type="text" name="isAdmin" value="1">
+        <input type="text" name="loginPasswort" value="123456">
+        <input type="text" name="masterPasswort" value="1234">
+        <input type="submit">
+    </form>
+</body>
