@@ -1,0 +1,37 @@
+{
+    "manifest_version": 2,
+    "name": "Passwortmanager",
+    "version": "1.0",
+    "description": "Das Browserplugin des Passwortmanager-Abschlussprojekts.",
+    "permissions": [
+        "storage",
+        "tabs",
+        "notifications"
+    ],
+    "content_scripts": [
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "js": [
+                "./autofill.js"
+            ]
+        }
+    ],
+    "background": {
+        "scripts": [
+            "./background.js"
+        ],
+        "persistent": false,
+        "type": "module"
+    },
+    "browser_action": {
+        "default_title": "Passwortmanager",
+        "default_popup": "./popup/popup_login.html"
+    },
+    "browser_specific_settings": {
+        "gecko": {
+            "id": "pwm@bkm.de"
+        }
+    }
+}

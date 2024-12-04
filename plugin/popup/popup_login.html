@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="./bulma-no-dark-mode.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <section class="section">
+        <form id="login-form" action="/passwortView" method="post">
+            <h1 class="title">Login</h1>
+            <div class="field">
+                <div class="control has-icons-left">
+                    <input type="text" name="username" id="username" class="input"
+                        placeholder="Nutzername">
+                    <span class="icon is-small is-left">
+                        <i class="fa-solid fa-user"></i>
+                    </span>
+                </div>
+            </div>
+            <div class="field">
+                <div class="control has-icons-left">
+                    <input type="password" name="password" id="password" class="input"
+                        placeholder="Passwort">
+                    <span class="icon is-small is-left">
+                        <i class="fa-solid fa-key"></i>
+                    </span>
+                </div>
+            </div>
+            <div class="control">
+                <button id="submit-button" class="button is-link" disabled>Anmelden</button>
+            </div>
+            <script src="./popup_login.js"></script>
+        </form>
+    </section>
+</body>
+
+</html>
