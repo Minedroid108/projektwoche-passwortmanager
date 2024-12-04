@@ -14,12 +14,16 @@ app.use(express.static('public'));
 const connection = mysql.createConnection({
   host     : '127.0.0.1',
   user     : 'root',
-  password : 'lucario52755',
+  password : 'manager',
   database : 'passwortmanager'
 });
 
 app.get('/', (req, res) => {
     res.render('index');
+})
+
+app.get('/companySettings', (req, res) => {
+    res.render('companySettings');
 })
 
 app.get('/userlist', async (req, res) => {
@@ -115,6 +119,18 @@ app.post('/updatePassword', (req, res) => {
     console.log(req.body);
     res.redirect('/editPasswords');
 });
+
+app.get('/accountView', (req, res) => {
+    const user = {
+        vorname: 'User',
+        nachname: 'One',
+        password: 'password1',
+        masterPassword: 'master1',
+        department: 'IT'
+    };
+    res.render('accountView', { user: user });
+});
+
 function executeSQL(query, values) {
     return new Promise((resolve, reject) => {
         connection.query(query, values, (error, result, fields) => {
