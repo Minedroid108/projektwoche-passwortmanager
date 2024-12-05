@@ -6,7 +6,7 @@
     "permissions": [
         "notifications",
         "webRequest",
-        "http://localhost:3000/checkForWebsite"
+        "*://localhost/*"
     ],
     "content_scripts": [
         {
