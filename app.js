@@ -5,6 +5,7 @@ const mysql = require('mysql2');
 const bcrypt = require('bcrypt');
 const bodyParser = require('body-parser');
 const session = require('express-session');
+const { STATUS_CODES } = require('http');
 
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
@@ -37,13 +38,67 @@ connection.connect((err) => {
 
 // Login Page
 app.get('/', (req, res) => {
-  res.render('login', {
-    title: 'Login'
-  });
+  if (req.session.user) {
+    res.redirect('companySettings');
+  } else {
+    res.render('login', {
+      title: 'Login'
+    });
+  }
 });
 
+app.get('/pluginlogin', (req, res) => {
+  if (req.session.user) {
+    res.redirect('pluginLoggedInView');
+  } else {
+    res.render('pluginlogin', {
+      title: 'Login'
+    });
+  }
+});
+
+app.get('/pluginLoggedInView', (req, res) => {
+  res.render('pluginLoggedInView', {
+    title: "Logged In",
+    username: req.session.username,
+    fullName: req.session.fullName,
+    isAdmin: req.session.isAdmin
+  })
+});
+
+app.post('/checkForWebsite', (req, res) => {
+  if (!req.session.user) {
+    res.send({
+      found: false
+    });
+  } else {
+    const { site } = req.body;
+
+    const query = "SELECT * FROM userlogindata WHERE UserID = ? AND Site = ?";
+    connection.query(query, [req.session.user, site], (err, results) => {
+      if (err) {
+        console.log(`Error executing query: ${err}`);
+        res.status(500).send('Internal Server Error');
+        return;
+      }
+
+      if (results.length == 0) {
+        res.status(404).send('Keine Anmeldedaten gefunden!');
+        return;
+      }
+
+      results.forEach(loginData => {
+        if (loginData.Seite === site) {
+          res.status(200).send('Anmeldedaten vorhanden!');
+        }
+      });
+      res.status(404).send('Keine Anmeldedaten gefunden!');
+    });
+  }
+})
+
 app.post('/passwordView', (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, fromPlugin } = req.body;
 
   const query = 'SELECT * FROM user WHERE Nutzername = ?';
   connection.query(query, [username], (err, results) => {
@@ -68,7 +123,14 @@ app.post('/passwordView', (req, res) => {
 
       if (isMatch) {
         req.session.user = user.ID; // Speichern Sie Benutzerdaten in der Session
-        res.redirect('/companySettings'); // oder eine andere Seite nach dem Login
+        req.session.username = user.Nutzername;
+        req.session.fullName = `${user.Vorname} ${user.Nachname}`;
+        req.session.isAdmin = user.IsAdmin;
+        if (fromPlugin) {
+          res.redirect('/pluginLoggedInView');
+        } else {
+          res.redirect('/companySettings'); // oder eine andere Seite nach dem Login
+        }
       } else {
         res.send('Falsches Passwort');
       }
@@ -123,7 +185,7 @@ app.post('/addUser', function (req, res) {
         const dateFormat = formatDate(date);
 
         // Insert user into database
-        const query = 'INSERT INTO user (Nutzername, LoginPasswort, MasterPasswort, Erstellungsdatum) VALUES (?, ?, ?, ?)';
+        const query = 'INSERT INTO user (Nutzername, LoginPasswort, MasterPasswort, CreateDate) VALUES (?, ?, ?, ?)';
         const values = [req.body.username, loginPasswortHash, masterPasswortHash, dateFormat];
         connection.query(query, values, (err, results) => {
           if (err) {

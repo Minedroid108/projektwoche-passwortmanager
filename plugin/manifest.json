@@ -4,8 +4,6 @@
     "version": "1.0",
     "description": "Das Browserplugin des Passwortmanager-Abschlussprojekts.",
     "permissions": [
-        "storage",
-        "tabs",
         "notifications"
     ],
     "content_scripts": [
@@ -27,7 +25,7 @@
     },
     "browser_action": {
         "default_title": "Passwortmanager",
-        "default_popup": "./popup/popup_login.html"
+        "default_popup": "http://localhost:3000/pluginlogin"
     },
     "browser_specific_settings": {
         "gecko": {

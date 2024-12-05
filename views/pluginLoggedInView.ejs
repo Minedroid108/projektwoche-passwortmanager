@@ -1,0 +1,21 @@
+<%- include('../views/partials/head.ejs') %>
+
+    <body>
+        <section class="hero is-link">
+            <div class="hero-body">
+                <p class="title">
+                    <%= fullName %>
+                        <% if (isAdmin) { %> <span class="tag">Admin</span>
+                            <% } %>
+                </p>
+                <p class="subtitle">
+                    <%= username %>
+                </p>
+            </div>
+        </section>
+        <section class="section">
+            <a href="http://localhost:3000" target="_blank"><button class="button is-link" id="dashboard-button">Zum
+                    Dashboard</button></a>
+        </section>
+        <script src="./popup_logged_in.js"></script>
+    </body>
