@@ -10,6 +10,7 @@ const crypto = require('crypto');
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
 app.use(express.static('public'));
+app.use(express.json());
 app.use(bodyParser.urlencoded({ limit: '5000mb', extended: true, parameterLimit: 100000000000 }));
 
 // Schlüssel und Initialisierungsvektor (IV) für die Verschlüsselung
@@ -117,34 +118,30 @@ app.get('/pluginLoggedInView', (req, res) => {
 
 app.post('/checkForWebsite', (req, res) => {
   if (!req.session.user) {
-    res.send({
-      found: false
-    });
-  } else {
-    const { site } = req.body;
-
-    const query = "SELECT * FROM userlogindata WHERE UserID = ? AND Site = ?";
-    const values = [req.session.user, site];
-    connection.query(query, values, (err, results) => {
-      if (err) {
-        console.log(`Error executing query: ${err}`);
-        res.status(500).send('Internal Server Error');
-        return;
-      }
-
-      if (results.length == 0) {
-        res.status(404).send('Keine Anmeldedaten gefunden!');
-        return;
-      }
-
-      results.forEach(loginData => {
-        if (loginData.Seite === site) {
-          res.status(200).send('Anmeldedaten vorhanden!');
-        }
-      });
-      res.status(404).send('Keine Anmeldedaten gefunden!');
-    });
+    res.status(403).send('Not logged in');
+    return;
   }
+
+  const { site } = req.body;
+
+  const query = "SELECT webseite, UserID FROM userlogindata WHERE UserID = ? AND webseite = ?";
+  const values = [req.session.user, site];
+  connection.query(query, values, (err, results) => {
+    if (err) {
+      console.log(`Error executing query: ${err}`);
+      res.status(500).send('Internal Server Error');
+      return;
+    }
+
+    for (let i = 0; i < results.length; i++) {
+      const loginData = results[i];
+      if (loginData.webseite === site) {
+        res.status(200).send('Anmeldedaten vorhanden!');
+        return;
+      }
+    }
+    res.status(404).send('Keine Anmeldedaten gefunden!');
+  });
 })
 //#endregion
 

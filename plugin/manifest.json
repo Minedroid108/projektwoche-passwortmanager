@@ -4,7 +4,9 @@
     "version": "1.0",
     "description": "Das Browserplugin des Passwortmanager-Abschlussprojekts.",
     "permissions": [
-        "notifications"
+        "notifications",
+        "webRequest",
+        "http://localhost:3000/checkForWebsite"
     ],
     "content_scripts": [
         {
