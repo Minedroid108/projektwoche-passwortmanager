@@ -5,12 +5,17 @@ const mysql = require('mysql2');
 const bcrypt = require('bcrypt');
 const bodyParser = require('body-parser');
 const session = require('express-session');
-const { STATUS_CODES } = require('http');
+const crypto = require('crypto');
 
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
 app.use(express.static('public'));
 app.use(bodyParser.urlencoded({ limit: '5000mb', extended: true, parameterLimit: 100000000000 }));
+
+// Schlüssel und Initialisierungsvektor (IV) für die Verschlüsselung
+const algorithm = 'aes-256-cbc';
+const encryptionKey = 'b1b2b3b4b5b6b7b8b9b10b11b12b13b1';
+const iv = crypto.randomBytes(16); // 16 Bytes für AES
 
 // Session configuration
 app.use(session({
@@ -28,6 +33,7 @@ const connection = mysql.createConnection({
   database: 'passwortmanager'
 });
 
+//Error handling
 connection.connect((err) => {
   if (err) {
     console.error('Error connecting to the database:', err.stack);
@@ -36,8 +42,9 @@ connection.connect((err) => {
   console.log('Connected to the database');
 });
 
-// Login Page
-app.get('/', (req, res) => {
+//#region Login
+
+app.get('/', function (req, res) {
   if (req.session.user) {
     res.redirect('companySettings');
   } else {
@@ -97,61 +104,65 @@ app.post('/checkForWebsite', (req, res) => {
   }
 })
 
-app.post('/passwordView', (req, res) => {
-  const { username, password, fromPlugin } = req.body;
+app.post('/login', async function (req, res) {
+  const username = req.body.username;
+  const password = req.body.password;
 
-  const query = 'SELECT * FROM user WHERE Nutzername = ?';
-  connection.query(query, [username], (err, results) => {
-    if (err) {
-      console.error('Error executing query:', err.stack);
-      res.status(500).send('Internal Server Error');
-      return;
-    }
+  try {
+    const queryUsername = "SELECT ID, LoginPasswort FROM user WHERE Nutzername = ?";
+    const valuesUsername = [username];
+    const results = await executeSQL(queryUsername, valuesUsername);
 
     if (results.length === 0) {
-      res.send('Benutzer existiert nicht');
-      return;
+      return res.send('Benutzer existiert nicht');
     }
 
     const user = results[0];
-    bcrypt.compare(password, user.LoginPasswort, (err, isMatch) => {
-      if (err) {
-        console.error('Error comparing passwords:', err.stack);
-        res.status(500).send('Internal Server Error');
-        return;
-      }
+    const passwordHash = user.LoginPasswort;
 
-      if (isMatch) {
-        req.session.user = user.ID; // Speichern Sie Benutzerdaten in der Session
+    const isMatch = await bcrypt.compare(password, passwordHash);
+    if (isMatch) {
+      req.session.user = user.ID; // Speichern Sie Benutzerdaten in der Session
         req.session.username = user.Nutzername;
         req.session.fullName = `${user.Vorname} ${user.Nachname}`;
         req.session.isAdmin = user.IsAdmin;
         if (fromPlugin) {
           res.redirect('/pluginLoggedInView');
         } else {
-          res.redirect('/companySettings'); // oder eine andere Seite nach dem Login
+        console.log('Login erfolgreich, Benutzer-ID:', user.ID);
+      res.redirect('/passwords'); // Weiterleitung zur passwordView-Seite
         }
-      } else {
-        res.send('Falsches Passwort');
-      }
-    });
-  });
+    } else {
+      res.send('Falsches Passwort');
+    }
+  } catch (error) {
+    console.error('Error during login:', error.stack);
+    res.status(500).send('Internal Server Error');
+  }
 });
 
-// Middleware zum Überprüfen, ob der Benutzer eingeloggt ist
-function isAuthenticated(req, res, next) {
-  if (req.session.user) {
-    console.log(req.session.user);
-    return next();
-  } else {
-    res.redirect('/');
-  }
-}
+//#endregion
 
 // Beispiel einer geschützten Route
-app.get('/companySettings', isAuthenticated, (req, res) => {
-  res.render('companySettings');
-});
+app.get('/passwords', isAuthenticated, async (req, res) => {
+    try {
+      const query = 'SELECT webseite, EMail, Nutzername, Passwort FROM userlogindata';
+      new Promise(async (resolve, reject) => {
+        const passwords = await executeSQL(query);
+        var decryptedPasswords = [];
+        passwords.forEach(password => {
+          password.Passwort = decrypt(password.Passwort);
+          decryptedPasswords.push(password);
+        })
+        resolve(passwords);
+      }).then((passwords) => {
+        res.render('passwordView', { password: passwords });
+      });
+    } catch (error) {
+      console.error('Error fetching passwords:', error.stack);
+      res.status(500).send('Internal Server Error');
+    }
+  });
 
 // User
 app.get('/addUser', function (req, res) {
@@ -160,7 +171,7 @@ app.get('/addUser', function (req, res) {
   });
 });
 
-app.post('/addUser', function (req, res) {
+app.post('/addUser', isAuthenticated, function (req, res) {
   // to do: check if user already exists 
 
   // get passwords
@@ -200,11 +211,11 @@ app.post('/addUser', function (req, res) {
   });
 });
 
-app.get('/companySettings', (req, res) => {
+app.get('/companySettings', isAuthenticated, (req, res) => {
   res.render('companySettings');
 });
 
-app.get('/userlist', async (req, res) => {
+app.get('/userlist', isAuthenticated, async (req, res) => {
   // get Users
   const queryUsers = 'SELECT * FROM usertable;';
   const users = await executeSQL(queryUsers);
@@ -220,48 +231,17 @@ app.get('/userlist', async (req, res) => {
   });
 });
 
-app.get('/login', function (req, res) {
-  res.render('login', {
-    title: 'Login'
-  });
-});
-
-app.post('/login', function (req, res) {
-  const username = req.body.username;
-  const password = req.body.password;
-
-  new Promise(async function (resolve, reject) {
-    const queryUsername = "SELECT ID FROM user WHERE Nutzername = ?";
-    const valuesUsername = [username];
-    const userID = await executeSQL(queryUsername, valuesUsername);
-
-    const queryPassword = "SELECT LoginPassword FROM user WHERE ID = ?";
-    const valuesPassword = [password];
-    const passwordHash = await executeSQL(queryPassword, valuesPassword);
-  });
-});
-
-// userdata
-app.get('/passwords', (req, res) => {
-  const passwords = [
-    { webSite: 'example.com', email: 'user@example.com', username: 'user1', password: 'password1' },
-    { webSite: 'example.org', email: 'user2@example.org', username: 'user2', password: 'password2' }
-    // Weitere Passwörter hier hinzufügen
-  ];
-  res.render('passwordView', { password: passwords });
-});
-
 let deparmentLists = [
   { deparmentList: 'IT', quantityOfUser: 10, users: [{ username: 'user1', fullName: 'User One' }, { username: 'user2', fullName: 'User Two' }] },
   { deparmentList: 'HR', quantityOfUser: 5, users: [{ username: 'user3', fullName: 'User Three' }, { username: 'user4', fullName: 'User Four' }] }
   // Weitere Abteilungen hinzufügen
 ];
 
-app.get('/deparmentList', (req, res) => {
+app.get('/deparmentList', isAuthenticated, (req, res) => {
   res.render('deparmentList', { deparmentLists: deparmentLists });
 });
 
-app.post('/addDepartment', (req, res) => {
+app.post('/addDepartment', isAuthenticated, (req, res) => {
   const newDepartment = {
     deparmentList: req.body.deparmentName,
     quantityOfUser: 0, // Standardwert für neue Abteilungen
@@ -271,7 +251,7 @@ app.post('/addDepartment', (req, res) => {
   res.redirect('/deparmentList');
 });
 
-app.get('/editDepartment/:deparmentList', (req, res) => {
+app.get('/editDepartment/:deparmentList', isAuthenticated, (req, res) => {
   const department = deparmentLists.find(d => d.deparmentList === req.params.deparmentList);
   if (department) {
     res.render('editDepartment', { department: department });
@@ -280,7 +260,7 @@ app.get('/editDepartment/:deparmentList', (req, res) => {
   }
 });
 
-app.delete('/removeUser/:deparmentList/:username', (req, res) => {
+app.delete('/removeUser/:deparmentList/:username', isAuthenticated, (req, res) => {
   const department = deparmentLists.find(d => d.deparmentList === req.params.deparmentList);
   if (department) {
     department.users = department.users.filter(user => user.username !== req.params.username);
@@ -291,22 +271,94 @@ app.delete('/removeUser/:deparmentList/:username', (req, res) => {
   }
 });
 
-const passwords = [
-  { webSite: 'example.com', email: 'user@example.com', username: 'user1', password: 'password1' },
-  // Weitere Passwörter hier hinzufügen
-];
-
-app.get('/editPasswords', (req, res) => {
-  res.render('editPasswords', { password: passwords });
+app.get('/editPasswords', isAuthenticated, (req, res) => {
+  const { index, webseite, EMail, Nutzername, Passwort } = req.query;
+  const password = [{
+      webSite: webseite,
+      email: EMail,
+      username: Nutzername,
+      password: Passwort
+  }];
+  const title = 'Gespeichertes Passwort bearbeiten';
+  res.render('editPasswords', { 
+    password, 
+    title,
+    targetLink: '/editPassword'
+  });
 });
 
-app.post('/updatePassword', (req, res) => {
-  // Hier können Sie die Logik zum Aktualisieren des Passworts hinzufügen
-  console.log(req.body);
-  res.redirect('/editPasswords');
+app.get('/createPassword', isAuthenticated, async (req, res) => {
+  const { index, webseite, EMail, Nutzername, Passwort } = req.query;
+  const title = 'Neues Passwort erstellen';
+  const password = [{
+      webSite: webseite,
+      email: EMail,
+      username: Nutzername,
+      password: Passwort
+  }];
+  res.render('editPasswords', { 
+    password, 
+    title,
+    targetLink: '/createPassword',
+    userID: req.session.user
+  });
 });
 
-app.get('/accountView', (req, res) => {
+app.post('/createPassword', isAuthenticated, async (req, res) => {
+  const webSite = req.body.webSite;
+  const email = req.body.email;
+  const userID = req.body.userID;
+  const username = req.body.username;
+  const password = req.body.newPassword;
+  const date = new Date();
+  const dateFormat = formatDate(date);
+
+  // Verschlüssele das neue Passwort
+  const encryptedPassword = encrypt(password);
+
+  const query = 'INSERT INTO userlogindata (webseite, userID, EMail, Nutzername, Passwort, CreateDate, UpdateDate) VALUES (?, ?, ?, ?, ?, ?, ?)';
+  const values = [webSite, userID, email, username, encryptedPassword, dateFormat, dateFormat];
+
+
+  connection.query(query, values, (err, results) => {
+    if (err) {
+      console.error('Error inserting user:', err.stack);
+      res.status(500).send('Internal Server Error');
+      return;
+    }
+    res.redirect('/passwords');
+  });
+});
+
+app.post('/updatePassword', isAuthenticated, async (req, res) => {
+  const { webSite, email, username, newPassword } = req.body;
+
+  try {
+    // Überprüfe, ob das alte Passwort korrekt ist
+    const query = 'SELECT Passwort FROM userlogindata WHERE webseite = ? AND EMail = ? AND Nutzername = ?';
+    const values = [webSite, email, username];
+    const [results] = await connection.promise().query(query, values);
+
+    if (results.length === 0) {
+      return res.status(404).send('Eintrag nicht gefunden.');
+    }
+
+    // Verschlüssele das neue Passwort
+    const encryptedPassword = encrypt(newPassword);
+
+    // Update das Passwort in der Datenbank
+    const updateQuery = 'UPDATE userlogindata SET Passwort = ? WHERE webseite = ? AND EMail = ? AND Nutzername = ?';
+    const updateValues = [encryptedPassword, webSite, email, username];
+    await connection.promise().query(updateQuery, updateValues);
+
+    res.redirect('/passwords');
+  } catch (error) {
+    console.error('Error updating password:', error.stack);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+app.get('/accountView', isAuthenticated, (req, res) => {
   const user = {
     vorname: 'User',
     nachname: 'One',
@@ -317,6 +369,7 @@ app.get('/accountView', (req, res) => {
   res.render('accountView', { user: user });
 });
 
+//#region Methode
 function executeSQL(query, values) {
   return new Promise((resolve, reject) => {
     connection.query(query, values, (error, result, fields) => {
@@ -342,6 +395,36 @@ function formatDate(date) {
   ].map((n, i) => n.toString().padStart(2, "0")).join(":");
   return datePart + " " + timePart;
 }
+
+
+// Middleware zum Überprüfen, ob der Benutzer eingeloggt ist
+function isAuthenticated(req, res, next) {
+  if (req.session.user) {
+    console.log('Benutzer ist authentifiziert:', req.session.user);
+    return next();
+  } else {
+    res.redirect('/');
+  }
+}
+
+function encrypt(text) {
+  let cipher = crypto.createCipheriv(algorithm, Buffer.from(encryptionKey), iv);
+  let encrypted = cipher.update(text);
+  encrypted = Buffer.concat([encrypted, cipher.final()]);
+  return iv.toString('hex') + ':' + encrypted.toString('hex');
+}
+
+function decrypt(text) {
+  let textParts = text.split(':');
+  let iv = Buffer.from(textParts.shift(), 'hex');
+  let encryptedText = Buffer.from(textParts.join(':'), 'hex');
+  let decipher = crypto.createDecipheriv(algorithm, Buffer.from(encryptionKey), iv);
+  let decrypted = decipher.update(encryptedText);
+  decrypted = Buffer.concat([decrypted, decipher.final()]);
+  return decrypted.toString();
+}
+
+//#endregion
 
 app.listen(3000, () => {
   console.log('Server läuft auf Port 3000');
