@@ -42,7 +42,7 @@ connection.connect((err) => {
   console.log('Connected to the database');
 });
 
-//#region Login
+//#region Login DONE!
 
 app.get('/', function (req, res) {
   res.render('login', {
@@ -82,28 +82,8 @@ app.post('/login', async function (req, res) {
 
 //#endregion
 
-// Beispiel einer geschützten Route
-app.get('/passwords', isAuthenticated, async (req, res) => {
-    try {
-      const query = 'SELECT webseite, EMail, Nutzername, Passwort FROM userlogindata';
-      new Promise(async (resolve, reject) => {
-        const passwords = await executeSQL(query);
-        var decryptedPasswords = [];
-        passwords.forEach(password => {
-          password.Passwort = decrypt(password.Passwort);
-          decryptedPasswords.push(password);
-        })
-        resolve(passwords);
-      }).then((passwords) => {
-        res.render('passwordView', { password: passwords });
-      });
-    } catch (error) {
-      console.error('Error fetching passwords:', error.stack);
-      res.status(500).send('Internal Server Error');
-    }
-  });
+//#region User DONE!
 
-// User
 app.get('/addUser', function (req, res) {
   res.render('addUser', {
     title: 'Nutzer anlegen'
@@ -116,6 +96,7 @@ app.post('/addUser', isAuthenticated, function (req, res) {
   // get passwords
   const loginPasswort = req.body.loginPasswort;
   const masterPasswort = req.body.masterPasswort;
+  console.log(loginPasswort, masterPasswort);
 
   // generate salt
   const saltRounds = 10;
@@ -150,13 +131,9 @@ app.post('/addUser', isAuthenticated, function (req, res) {
   });
 });
 
-app.get('/companySettings', isAuthenticated, (req, res) => {
-  res.render('companySettings');
-});
-
 app.get('/userlist', isAuthenticated, async (req, res) => {
   // get Users
-  const queryUsers = 'SELECT * FROM usertable;';
+  const queryUsers = 'SELECT * FROM user;';
   const users = await executeSQL(queryUsers);
 
   // get Abteilungen
@@ -170,35 +147,6 @@ app.get('/userlist', isAuthenticated, async (req, res) => {
   });
 });
 
-let deparmentLists = [
-  { deparmentList: 'IT', quantityOfUser: 10, users: [{ username: 'user1', fullName: 'User One' }, { username: 'user2', fullName: 'User Two' }] },
-  { deparmentList: 'HR', quantityOfUser: 5, users: [{ username: 'user3', fullName: 'User Three' }, { username: 'user4', fullName: 'User Four' }] }
-  // Weitere Abteilungen hinzufügen
-];
-
-app.get('/deparmentList', isAuthenticated, (req, res) => {
-  res.render('deparmentList', { deparmentLists: deparmentLists });
-});
-
-app.post('/addDepartment', isAuthenticated, (req, res) => {
-  const newDepartment = {
-    deparmentList: req.body.deparmentName,
-    quantityOfUser: 0, // Standardwert für neue Abteilungen
-    users: []
-  };
-  deparmentLists.push(newDepartment);
-  res.redirect('/deparmentList');
-});
-
-app.get('/editDepartment/:deparmentList', isAuthenticated, (req, res) => {
-  const department = deparmentLists.find(d => d.deparmentList === req.params.deparmentList);
-  if (department) {
-    res.render('editDepartment', { department: department });
-  } else {
-    res.status(404).send('Abteilung nicht gefunden');
-  }
-});
-
 app.delete('/removeUser/:deparmentList/:username', isAuthenticated, (req, res) => {
   const department = deparmentLists.find(d => d.deparmentList === req.params.deparmentList);
   if (department) {
@@ -207,6 +155,126 @@ app.delete('/removeUser/:deparmentList/:username', isAuthenticated, (req, res) =
     res.sendStatus(200);
   } else {
     res.status(404).send('Abteilung oder Benutzer nicht gefunden');
+  }
+});
+
+//#endregion
+
+//#region Abteilungen
+
+app.get('/deparmentList', isAuthenticated, (req, res) => {
+  const query = 'SELECT Abteilungen, COUNT(UserID) AS quantityOfUser FROM abteilung GROUP BY Abteilungen';
+  connection.query(query, (err, results) => {
+    if (err) {
+      console.error('Fehler bei der Abfrage:', err);
+      res.status(500).send('Fehler bei der Abfrage');
+      return;
+    }
+    res.render('deparmentList', { deparmentLists: results });
+  });
+});
+
+app.post('/addDepartment', isAuthenticated, (req, res) => {
+  const newDepartment = {
+    deparmentList: req.body.deparmentName,
+    quantityOfUser: 0, // Standardwert für neue Abteilungen
+    users: []
+  };
+  const query = 'INSERT INTO abteilung (Abteilungen) VALUES (?)';
+  connection.query(query, [newDepartment.deparmentList], (err, results) => {
+    if (err) {
+      console.error('Fehler bei der Abfrage:', err);
+      res.status(500).send('Fehler bei der Abfrage');
+      return;
+    }
+    res.redirect('/deparmentList');
+  });
+});
+
+app.get('/editDepartment/:deparmentList', isAuthenticated, (req, res) => {
+  const query = 'SELECT * FROM abteilung WHERE Abteilungen = ?';
+  connection.query(query, [req.params.deparmentList], (err, results) => {
+    if (err) {
+      console.error('Fehler bei der Abfrage:', err);
+      res.status(500).send('Fehler bei der Abfrage');
+      return;
+    }
+    if (results.length === 0) {
+      res.status(404).send('Abteilung nicht gefunden');
+      return;
+    }
+
+    const department = {
+      deparmentList: results[0].Abteilungen,
+      users: []
+    };
+
+    // Abfrage, um die Benutzer der Abteilung zu erhalten
+    const userQuery = `
+      SELECT u.Nutzername, u.Vorname, u.Nachname
+      FROM user u
+      JOIN abteilung a ON u.ID = a.UserID
+      where a.Abteilungen = ?;
+    `;
+    connection.query(userQuery, [req.params.deparmentList], (userErr, userResults) => {
+      if (userErr) {
+        console.error('Fehler bei der Benutzerabfrage:', userErr);
+        res.status(500).send('Fehler bei der Benutzerabfrage');
+        return;
+      }
+      department.users = userResults;
+      res.render('editDepartment', { department });
+    });
+  });
+});
+
+app.post('/addDepartment', isAuthenticated, (req, res) => {
+  const userID = req.session.userID;
+  console.log(userID);
+  const newDepartment = {
+    deparmentList: req.body.deparmentName,
+    quantityOfUser: 0, // Standardwert für neue Abteilungen
+    users: []
+  };
+  const query = 'INSERT INTO abteilung (Abteilungen) VALUES (?)';
+  connection.query(query, [newDepartment.deparmentList, userID], (err, results) => {
+    if (err) {
+      console.error('Fehler bei der Abfrage:', err);
+      res.status(500).send('Fehler bei der Abfrage');
+      return;
+    }
+    res.redirect('/deparmentList');
+  });
+});
+//#endregion
+
+//#region Einstellungen
+app.get('/companySettings', isAuthenticated, (req, res) => {
+  res.render('companySettings');
+});
+
+//#endregion
+
+//#region Passwortverwaltung DONE!
+
+app.get('/passwords', isAuthenticated, async (req, res) => {
+  try {
+    const query = 'SELECT webseite, EMail, Nutzername, Passwort FROM userlogindata Where userID = ?';
+    const values = [req.session.user];
+    new Promise(async (resolve, reject) => {
+      const passwords = await executeSQL(query, values);
+      var decryptedPasswords = [];
+      passwords.forEach(password => {
+        password.Passwort = decrypt(password.Passwort);
+        decryptedPasswords.push(password);
+      })
+      resolve(passwords);
+    }).then((passwords) => {
+      res.render('passwordView', { password: passwords });
+    });
+  } catch (error) {
+    console.error('Error fetching passwords:', error.stack);
+    res.status(500).send('Internal Server Error');
   }
 });
 
@@ -227,7 +295,7 @@ app.get('/editPasswords', isAuthenticated, (req, res) => {
 });
 
 app.get('/createPassword', isAuthenticated, async (req, res) => {
-  const { index, webseite, EMail, Nutzername, Passwort } = req.query;
+  const { webseite, EMail, Nutzername, Passwort } = req.query;
   const title = 'Neues Passwort erstellen';
   const password = [{
       webSite: webseite,
@@ -257,7 +325,6 @@ app.post('/createPassword', isAuthenticated, async (req, res) => {
 
   const query = 'INSERT INTO userlogindata (webseite, userID, EMail, Nutzername, Passwort, CreateDate, UpdateDate) VALUES (?, ?, ?, ?, ?, ?, ?)';
   const values = [webSite, userID, email, username, encryptedPassword, dateFormat, dateFormat];
-
 
   connection.query(query, values, (err, results) => {
     if (err) {
@@ -297,16 +364,54 @@ app.post('/updatePassword', isAuthenticated, async (req, res) => {
   }
 });
 
-app.get('/accountView', isAuthenticated, (req, res) => {
-  const user = {
-    vorname: 'User',
-    nachname: 'One',
-    password: 'password1',
-    masterPassword: 'master1',
-    department: 'IT'
-  };
-  res.render('accountView', { user: user });
+//#endregion
+
+//#region AccountView DONE!
+
+app.get('/accountView', isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.session.user; // Assuming you have user ID in req.user
+    const query = 'SELECT ID, Vorname, Nachname, Nutzername, IsAdmin, LoginPasswort, MasterPasswort FROM User WHERE ID = ?';
+    const queryAbteilungen = 'SELECT * FROM abteilung;';
+    const abteilungen = await executeSQL(queryAbteilungen);
+    connection.query(query, [userId], (err, result) => {
+      if (err) {
+        throw err;
+      }
+      const user = result[0];
+      console.log(user)
+      res.render('accountView', { 
+        user: user, 
+        abteilungen: abteilungen
+      });
+    });
+  } catch (error) {
+    console.error('Error fetching account:', error.stack);
+    res.status(500).send('Internal Server Error');
+  }
 });
+
+app.post('/accountView', isAuthenticated, async (req, res) => {
+  const userId = req.session.user; // Assuming you have user ID in req.user
+  const { vorname, nachname, password, masterPassword } = req.body;
+
+  const hashedPassword = password ? await bcrypt.hash(password, 10) : null;
+  const hashedMasterPassword = masterPassword ? await bcrypt.hash(masterPassword, 10) : null;
+
+  const query = 'UPDATE User SET Vorname = ?, Nachname = ?, LoginPasswort = ?, MasterPasswort = ?';
+  const values = [vorname, nachname, hashedPassword, hashedMasterPassword, department, userId];
+
+  connection.query(query, values, (err, result) => {
+    if (err) {
+      console.error('Error updating user:', err.stack);
+      res.status(500).send('Internal Server Error');
+      return;
+    }
+    res.redirect('/accountView');
+  });
+});
+
+//#endregion
 
 //#region Methode
 function executeSQL(query, values) {

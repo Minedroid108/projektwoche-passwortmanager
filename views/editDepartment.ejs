@@ -37,8 +37,8 @@
                 <tbody>
                     <% department.users.forEach(function(user) { %>
                     <tr>
-                        <td><%= user.username %></td>
-                        <td><%= user.fullName %></td>
+                        <td><%= user.Nutzername%></td>
+                        <td><%= user.Vorname + " " + user.Nachname%></td>
                         <td>
                             <a href="javascript:void(0);" onclick="removeUser('<%= department.deparmentList %>', '<%= user.username %>')">
                                 <img src="/Icons/removeUser.png" width="25" height="25">

@@ -29,17 +29,17 @@
                         <th>Abteilungsname</th>
                         <th>Anzahl der Nutzer</th>
                         <th>
-                            <a href=""><img src="Icons/add.png" width=  "25" height="25"></a>
+                            <a href="javascript:void(0);" onclick="addRow()"><img src="Icons/add.png" width="25" height="25"></a>
                         </th>
                     </tr>
                 </thead>
                 <tbody>
                     <% deparmentLists.forEach(function(e) { %>
                     <tr>
-                        <td><%= e.deparmentList %></td>
+                        <td><%= e.Abteilungen %></td>
                         <td><%= e.quantityOfUser %></td>
                         <td>
-                            <a href="/editDepartment/<%= e.deparmentList %>"><img src="Icons/edit.png" width="25" height="25"></a>
+                            <a href="/editDepartment/<%= e.Abteilungen %>"><img src="Icons/edit.png" width="25" height="25"></a>
                             <a href=""><img src="Icons/trash.png" width="25" height="25"></a>
                         </td>
                     </tr>
@@ -68,5 +68,51 @@
             </form>
         </div>
     </section>
+    <script>
+        function addRow() {
+            var table = document.querySelector('table tbody');
+            var newRow = document.createElement('tr');
+    
+            var nameCell = document.createElement('td');
+            var nameInput = document.createElement('input');
+            nameInput.type = 'text';
+            nameInput.name = 'newDepartmentName';
+            nameInput.placeholder = 'Abteilungsname';
+            nameInput.required = true;
+            nameCell.appendChild(nameInput);
+    
+            var userCountCell = document.createElement('td');
+            userCountCell.textContent = '0'; // Default value for new department
+    
+            var actionCell = document.createElement('td');
+            var saveButton = document.createElement('button');
+            saveButton.className = 'button is-success';
+            saveButton.type = 'button';
+            saveButton.innerHTML = '<img src="Icons/check.png" width="25" height="25">';
+            saveButton.onclick = function() {
+                var departmentName = nameInput.value;
+                if (departmentName) {
+                    var form = document.createElement('form');
+                    form.action = '/addDepartment';
+                    form.method = 'POST';
+                    var input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'deparmentName';
+                    input.value = departmentName;
+                    form.appendChild(input);
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            };
+    
+            actionCell.appendChild(saveButton);
+    
+            newRow.appendChild(nameCell);
+            newRow.appendChild(userCountCell);
+            newRow.appendChild(actionCell);
+    
+            table.appendChild(newRow);
+        }
+    </script>
 </body>
 </html>
