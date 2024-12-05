@@ -54,6 +54,48 @@ app.get('/', function (req, res) {
   }
 });
 
+app.post('/login', async function (req, res) {
+  const username = req.body.username;
+  const password = req.body.password;
+  const fromPlugin = req.body.fromPlugin;
+
+  try {
+    const queryUsername = "SELECT ID, LoginPasswort, Vorname, Nachname, Nutzername, IsAdmin FROM user WHERE Nutzername = ?";
+    const valuesUsername = [username];
+    const results = await executeSQL(queryUsername, valuesUsername);
+
+    if (results.length === 0) {
+      return res.send('Benutzer existiert nicht');
+    }
+
+    const user = results[0];
+    console.log(user)
+    const passwordHash = user.LoginPasswort;
+
+    const isMatch = await bcrypt.compare(password, passwordHash);
+    if (isMatch) {
+      req.session.user = user.ID; // Speichern Sie Benutzerdaten in der Session
+      req.session.username = user.Nutzername;
+      req.session.fullName = `${user.Vorname} ${user.Nachname}`;
+      req.session.isAdmin = user.IsAdmin;
+      if (fromPlugin) {
+        res.redirect('/pluginLoggedInView');
+      } else {
+        console.log('Login erfolgreich, Benutzer-ID:', user.ID);
+        res.redirect('/passwords'); // Weiterleitung zur passwordView-Seite
+      }
+    } else {
+      res.send('Falsches Passwort');
+    }
+  } catch (error) {
+    console.error('Error during login:', error.stack);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+//#endregion
+
+//#region Plugin
 app.get('/pluginlogin', (req, res) => {
   if (req.session.user) {
     res.redirect('pluginLoggedInView');
@@ -82,7 +124,8 @@ app.post('/checkForWebsite', (req, res) => {
     const { site } = req.body;
 
     const query = "SELECT * FROM userlogindata WHERE UserID = ? AND Site = ?";
-    connection.query(query, [req.session.user, site], (err, results) => {
+    const values = [req.session.user, site];
+    connection.query(query, values, (err, results) => {
       if (err) {
         console.log(`Error executing query: ${err}`);
         res.status(500).send('Internal Server Error');
@@ -103,66 +146,28 @@ app.post('/checkForWebsite', (req, res) => {
     });
   }
 })
-
-app.post('/login', async function (req, res) {
-  const username = req.body.username;
-  const password = req.body.password;
-
-  try {
-    const queryUsername = "SELECT ID, LoginPasswort FROM user WHERE Nutzername = ?";
-    const valuesUsername = [username];
-    const results = await executeSQL(queryUsername, valuesUsername);
-
-    if (results.length === 0) {
-      return res.send('Benutzer existiert nicht');
-    }
-
-    const user = results[0];
-    const passwordHash = user.LoginPasswort;
-
-    const isMatch = await bcrypt.compare(password, passwordHash);
-    if (isMatch) {
-      req.session.user = user.ID; // Speichern Sie Benutzerdaten in der Session
-        req.session.username = user.Nutzername;
-        req.session.fullName = `${user.Vorname} ${user.Nachname}`;
-        req.session.isAdmin = user.IsAdmin;
-        if (fromPlugin) {
-          res.redirect('/pluginLoggedInView');
-        } else {
-        console.log('Login erfolgreich, Benutzer-ID:', user.ID);
-      res.redirect('/passwords'); // Weiterleitung zur passwordView-Seite
-        }
-    } else {
-      res.send('Falsches Passwort');
-    }
-  } catch (error) {
-    console.error('Error during login:', error.stack);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
 //#endregion
 
 // Beispiel einer geschützten Route
 app.get('/passwords', isAuthenticated, async (req, res) => {
-    try {
-      const query = 'SELECT webseite, EMail, Nutzername, Passwort FROM userlogindata';
-      new Promise(async (resolve, reject) => {
-        const passwords = await executeSQL(query);
-        var decryptedPasswords = [];
-        passwords.forEach(password => {
-          password.Passwort = decrypt(password.Passwort);
-          decryptedPasswords.push(password);
-        })
-        resolve(passwords);
-      }).then((passwords) => {
-        res.render('passwordView', { password: passwords });
-      });
-    } catch (error) {
-      console.error('Error fetching passwords:', error.stack);
-      res.status(500).send('Internal Server Error');
-    }
-  });
+  try {
+    const query = 'SELECT webseite, EMail, Nutzername, Passwort FROM userlogindata';
+    new Promise(async (resolve, reject) => {
+      const passwords = await executeSQL(query);
+      var decryptedPasswords = [];
+      passwords.forEach(password => {
+        password.Passwort = decrypt(password.Passwort);
+        decryptedPasswords.push(password);
+      })
+      resolve(passwords);
+    }).then((passwords) => {
+      res.render('passwordView', { password: passwords });
+    });
+  } catch (error) {
+    console.error('Error fetching passwords:', error.stack);
+    res.status(500).send('Internal Server Error');
+  }
+});
 
 // User
 app.get('/addUser', function (req, res) {
@@ -274,14 +279,14 @@ app.delete('/removeUser/:deparmentList/:username', isAuthenticated, (req, res) =
 app.get('/editPasswords', isAuthenticated, (req, res) => {
   const { index, webseite, EMail, Nutzername, Passwort } = req.query;
   const password = [{
-      webSite: webseite,
-      email: EMail,
-      username: Nutzername,
-      password: Passwort
+    webSite: webseite,
+    email: EMail,
+    username: Nutzername,
+    password: Passwort
   }];
   const title = 'Gespeichertes Passwort bearbeiten';
-  res.render('editPasswords', { 
-    password, 
+  res.render('editPasswords', {
+    password,
     title,
     targetLink: '/editPassword'
   });
@@ -291,13 +296,13 @@ app.get('/createPassword', isAuthenticated, async (req, res) => {
   const { index, webseite, EMail, Nutzername, Passwort } = req.query;
   const title = 'Neues Passwort erstellen';
   const password = [{
-      webSite: webseite,
-      email: EMail,
-      username: Nutzername,
-      password: Passwort
+    webSite: webseite,
+    email: EMail,
+    username: Nutzername,
+    password: Passwort
   }];
-  res.render('editPasswords', { 
-    password, 
+  res.render('editPasswords', {
+    password,
     title,
     targetLink: '/createPassword',
     userID: req.session.user
