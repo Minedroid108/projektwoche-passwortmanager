@@ -64,9 +64,10 @@ function checkForLogin() {
         console.log(res);
         if (res.status == 200) {
             browser.runtime.sendMessage(`login-available:${site}`);
+        } else {
+            browser.runtime.sendMessage("login-unavailable");
         }
     });
 }
 
-browser.runtime.sendMessage("login-unavailable");
 window.addEventListener("load", checkForLogin);
