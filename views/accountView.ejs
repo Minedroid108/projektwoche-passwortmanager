@@ -1,126 +1,224 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
-    <title>Account Übersicht</title>
-</head>
+<%- include('../views/partials/head.ejs') %>
 <body>
+    <%- include('../views/partials/navbar.ejs') %>
     <section class="section">
         <div class="container">
             <div class="columns is-centered">
-                <div class="column is-half">
+                <div class="column is-fullheight">
                     <div class="box">
                         <div class="is-flex is-align-items-center">
                             <img src="/Icons/UserIcon.png" width="30" height="30">
-                            <span class="is-size-3" style="margin-left:10px;">mwe</span>
-                            <span class="tag is-light is-rounded" style="margin-left:10px;">Admin</span>
+                            <span class="is-size-3" style="margin-left:10px;"><%= user.Nutzername %></span>
+                            <span class="tag is-light is-rounded" style="margin-left:10px;"><%= user.IsAdmin ? 'Admin' : 'User' %></span>
                         </div>
                         <h1 class="title">Kontoeinstellungen</h1>
-                        <div class="field is-horizontal">
-                            <div class="field-label is-normal">
-                                <label class="label">Name</label>
-                            </div>
-                            <div class="field-body">
-                                <div class="field is-flex">
-                                    <div class="control">
-                                        <input class="input" type="text" name="name" value="Marcel Weber" readonly>
-                                    </div>
-                                    <span class="icon"><img src="Icons/edit.png"></span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="field is-horizontal">
-                            <div class="field-label is-normal">
-                                <label class="label">Passwort</label>
-                            </div>
-                            <div class="field-body">
-                                <div class="field is-flex">
-                                    <div class="control">
-                                        <input class="input" type="password" name="password" value="********" readonly>
-                                    </div>
-                                    <span class="icon" id="edit-password-icon"><img src="Icons/edit.png"></span>
-                                </div>
-                            </div>
-                        </div>
-                        <div id="password-change-form" style="display: none;">
+                        <form action="/accountView" method="POST">
                             <div class="field is-horizontal">
                                 <div class="field-label is-normal">
-                                    <label class="label">Altes Passwort eingeben</label>
+                                    <label class="label">Vorname</label>
                                 </div>
                                 <div class="field-body">
                                     <div class="field is-flex">
                                         <div class="control">
-                                            <input class="input" type="password" name="oldPassword">
+                                            <input class="input" type="text" name="vorname" value="<%= user.Vorname %>" readonly>
+                                        </div>
+                                        <span class="icon" id="edit-vorname-icon"><img src="Icons/edit.png"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="field is-horizontal">
+                                <div class="field-label is-normal">
+                                    <label class="label">Nachname</label>
+                                </div>
+                                <div class="field-body">
+                                    <div class="field is-flex">
+                                        <div class="control">
+                                            <input class="input" type="text" name="nachname" value="<%= user.Nachname %>" readonly>
+                                        </div>
+                                        <span class="icon" id="edit-nachname-icon"><img src="Icons/edit.png"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="field is-horizontal">
+                                <div class="field-label is-normal">
+                                    <label class="label">Passwort</label>
+                                </div>
+                                <div class="field-body">
+                                    <div class="field is-flex">
+                                        <div class="control">
+                                            <input class="input" type="password" name="password" placeholder="********" readonly>
+                                        </div>
+                                        <span class="icon" id="edit-password-icon"><img src="Icons/edit.png"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="password-change-form" style="display: none;">
+                                <div class="field is-horizontal">
+                                    <div class="field-label is-normal">
+                                        <label class="label">Altes Passwort</label>
+                                    </div>
+                                    <div class="field-body">
+                                        <div class="field is-flex">
+                                            <div class="control">
+                                                <input class="input" type="password" name="oldPassword">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="field is-horizontal">
+                                    <div class="field-label is-normal">
+                                        <label class="label">Neues Passwort eingeben</label>
+                                    </div>
+                                    <div class="field-body">
+                                        <div class="field is-flex">
+                                            <div class="control">
+                                                <input class="input" type="password" name="newPassword">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="field is-horizontal">
+                                    <div class="field-label is-normal">
+                                        <label class="label">Neues Passwort bestätigen</label>
+                                    </div>
+                                    <div class="field-body">
+                                        <div class="field is-flex">
+                                            <div class="control">
+                                                <input class="input" type="password" name="confirmNewPassword">
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             <div class="field is-horizontal">
                                 <div class="field-label is-normal">
-                                    <label class="label">Neues Passwort eingeben</label>
+                                    <label class="label">Master-Passwort</label>
                                 </div>
                                 <div class="field-body">
                                     <div class="field is-flex">
                                         <div class="control">
-                                            <input class="input" type="password" name="newPassword">
+                                            <input class="input" type="password" name="masterPassword" placeholder="********" readonly>
+                                        </div>
+                                        <span class="icon" id="edit-master-password-icon"><img src="Icons/edit.png"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="master-password-change-form" style="display: none;">
+                                <div class="field is-horizontal">
+                                    <div class="field-label is-normal">
+                                        <label class="label">Altes Master-Passwort</label>
+                                    </div>
+                                    <div class="field-body">
+                                        <div class="field is-flex">
+                                            <div class="control">
+                                                <input class="input" type="password" name="oldMasterPassword">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="field is-horizontal">
+                                    <div class="field-label is-normal">
+                                        <label class="label">Neues Master-Passwort eingeben</label>
+                                    </div>
+                                    <div class="field-body">
+                                        <div class="field is-flex">
+                                            <div class="control">
+                                                <input class="input" type="password" name="newMasterPassword">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="field is-horizontal">
+                                    <div class="field-label is-normal">
+                                        <label class="label">Neues Master-Passwort bestätigen</label>
+                                    </div>
+                                    <div class="field-body">
+                                        <div class="field is-flex">
+                                            <div class="control">
+                                                <input class="input" type="password" name="confirmNewMasterPassword">
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="field is-horizontal">
-                                <div class="field-label is-normal">
-                                    <label class="label">Neues Passwort bestätigen</label>
-                                </div>
-                                <div class="field-body">
-                                    <div class="field is-flex">
-                                        <div class="control">
-                                            <input class="input" type="password" name="confirmNewPassword">
-                                        </div>
-                                    </div>
-                                </div>
+                            <div id="save-button-container" style="display: none; text-align: center; margin-top: 20px;">
+                                <button class="button is-primary" id="save-button">Speichern</button>
                             </div>
-                        </div>
-                        <h1 class="title">Passwortmanagereinstellungen</h1>
-                        <div class="field is-horizontal">
-                            <div class="field-label is-normal">
-                                <label class="label">Master-Passwort</label>
-                            </div>
-                            <div class="field-body">
-                                <div class="field is-flex">
-                                    <div class="control">
-                                        <input class="input" type="password" name="masterPassword" value="********" readonly>
-                                    </div>
-                                    <span class="icon"><img src="Icons/edit.png"></span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="field is-horizontal">
-                            <div class="field-label is-normal">
-                                <label class="label">Abteilung</label>
-                            </div>
-                            <div class="field-body">
-                                <div class="field is-flex">
-                                    <div class="control">
-                                        <input class="input" type="text" name="department" value="IT" readonly>
-                                    </div>
-                                    <span class="icon"><img src="Icons/edit.png"></span>
-                                </div>
-                            </div>
-                        </div>
+                        </form>
                     </div>
                 </div>
             </div>
         </div>
     </section>
     <script>
+        function showSaveButton() {
+            document.getElementById('save-button-container').style.display = 'block';
+        }
+
+        document.getElementById('edit-vorname-icon').addEventListener('click', function() {
+            var vornameInput = document.querySelector('input[name="vorname"]');
+            vornameInput.removeAttribute('readonly');
+            vornameInput.focus();
+            showSaveButton();
+        });
+
+        document.getElementById('edit-nachname-icon').addEventListener('click', function() {
+            var nachnameInput = document.querySelector('input[name="nachname"]');
+            nachnameInput.removeAttribute('readonly');
+            nachnameInput.focus();
+            showSaveButton();
+        });
+
         document.getElementById('edit-password-icon').addEventListener('click', function() {
             var form = document.getElementById('password-change-form');
             if (form.style.display === 'none' || form.style.display === '') {
                 form.style.display = 'block';
             } else {
                 form.style.display = 'none';
+            }
+            showSaveButton();
+        });
+
+        document.getElementById('edit-master-password-icon').addEventListener('click', function() {
+            var form = document.getElementById('master-password-change-form');
+            if (form.style.display === 'none' || form.style.display === '') {
+                form.style.display = 'block';
+            } else {
+                form.style.display = 'none';
+            }
+            showSaveButton();
+        });
+
+        document.getElementById('save-button').addEventListener('click', function(event) {
+            var oldPassword = document.querySelector('input[name="oldPassword"]').value;
+            var newPassword = document.querySelector('input[name="newPassword"]').value;
+            var confirmNewPassword = document.querySelector('input[name="confirmNewPassword"]').value;
+            var oldMasterPassword = document.querySelector('input[name="oldMasterPassword"]').value;
+            var newMasterPassword = document.querySelector('input[name="newMasterPassword"]').value;
+            var confirmNewMasterPassword = document.querySelector('input[name="confirmNewMasterPassword"]').value;
+
+            if (!oldPassword && newPassword) {
+                alert('Bitte geben Sie Ihr altes Passwort ein.');
+                event.preventDefault();
+                return;
+            }
+
+            if (newPassword && newPassword !== confirmNewPassword) {
+                alert('Die neuen Passwörter stimmen nicht überein.');
+                event.preventDefault();
+                return;
+            }
+
+            if (!oldMasterPassword && newMasterPassword) {
+                alert('Bitte geben Sie Ihr altes Master-Passwort ein.');
+                event.preventDefault();
+                return;
+            }
+
+            if (newMasterPassword && newMasterPassword !== confirmNewMasterPassword) {
+                alert('Die neuen Master-Passwörter stimmen nicht überein.');
+                event.preventDefault();
+                return;
             }
         });
     </script>
