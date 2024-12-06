@@ -142,7 +142,33 @@ app.post('/checkForWebsite', (req, res) => {
     }
     res.status(404).send('Keine Anmeldedaten gefunden!');
   });
-})
+});
+
+app.get('/getlogindata/:site', isAuthenticated, (req, res) => {
+  if (!req.session.user) {
+    res.status(403).send('Not logged in');
+    return;
+  }
+
+  try {
+    const site = req.params.site;
+    const query = `SELECT webseite, EMail, Nutzername, Passwort FROM userlogindata WHERE webseite = ?`;
+    new Promise(async (resolve, reject) => {
+      const passwords = await executeSQL(query, [site]);
+      var decryptedPasswords = [];
+      passwords.forEach(password => {
+        password.Passwort = decrypt(password.Passwort);
+        decryptedPasswords.push(password);
+      })
+      resolve(decryptedPasswords);
+    }).then((passwords) => {
+      res.render('copyPwView', { password: passwords });
+    });
+  } catch (error) {
+    console.error('Error fetching passwords:', error.stack);
+    res.status(500).send('Internal Server Error');
+  }
+});
 //#endregion
 
 // Beispiel einer geschützten Route

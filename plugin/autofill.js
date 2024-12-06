@@ -63,7 +63,7 @@ function checkForLogin() {
     }).then((res) => {
         console.log(res);
         if (res.status == 200) {
-            browser.runtime.sendMessage("login-available");
+            browser.runtime.sendMessage(`login-available:${site}`);
         } else {
             browser.runtime.sendMessage("login-unavailable");
         }
