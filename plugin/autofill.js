@@ -35,7 +35,6 @@ function checkForLogin() {
             case "email":
             case "password":
                 loginInputs.push(input);
-                elementCounts = true;
                 continue;
         }
         switch (input.name.toLowerCase()) {
@@ -47,6 +46,7 @@ function checkForLogin() {
         }
     }
     if (loginInputs.length < 1) {
+        browser.runtime.sendMessage("login-unavailable");
         return;
     }
 
