@@ -52,7 +52,15 @@ connection.connect((err) => {
 
 app.get('/', function (req, res) {
   if (req.session.user) {
-    res.redirect('companySettings');
+    res.redirect('passwords');
+  } else {
+    res.redirect('login');
+  }
+});
+
+app.get('/login', function (req, res) {
+  if (req.session.user) {
+    res.redirect('passwords');
   } else {
     res.render('login', {
       title: 'Login'
