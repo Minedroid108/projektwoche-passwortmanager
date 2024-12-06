@@ -47,6 +47,7 @@ function checkForLogin() {
         }
     }
     if (loginInputs.length < 1) {
+        browser.runtime.sendMessage("login-unavailable");
         return;
     }
 
