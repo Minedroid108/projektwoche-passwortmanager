@@ -162,7 +162,11 @@ app.get('/getlogindata/:site', isAuthenticated, (req, res) => {
       })
       resolve(decryptedPasswords);
     }).then((passwords) => {
-      res.render('copyPwView', { password: passwords });
+      res.render('copyPwView', {
+        title: "Verfügbare Passwörter",
+        site: site,
+        password: passwords
+      });
     });
   } catch (error) {
     console.error('Error fetching passwords:', error.stack);

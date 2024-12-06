@@ -6,6 +6,7 @@
     "permissions": [
         "notifications",
         "webRequest",
+        "tabs",
         "*://localhost/*"
     ],
     "content_scripts": [

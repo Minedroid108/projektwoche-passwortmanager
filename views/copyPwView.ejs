@@ -1,68 +1,60 @@
-<!DOCTYPE html>
-<html lang="en">
+<%- include('./partials/head.ejs') %>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
-    <title>Passwort Übersicht</title>
-</head>
-
-<body>
-    <section class="section">
-        <div class="container">
-            <h1 class="title">
-                <img src="Icons/Closed.png" width="25" height="25"> Passwörter für <%= password[0].webseite %>
-            </h1>
-            <table class="table is-striped is-fullwidth">
-                <thead>
-                    <tr>
-                        <th>Email</th>
-                        <th></th>
-                        <th>Nutzername</th>
-                        <th></th>
-                        <th>Passwort</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% password.forEach(function(e, index) { %>
+    <body>
+        <section class="section">
+            <div class="container">
+                <h1 class="title">
+                    <img src="/Icons/Closed.png" width="25" height="25"> Passwörter für <%= site %>
+                </h1>
+                <table class="table is-striped is-fullwidth">
+                    <thead>
                         <tr>
-                            <td>
-                                <%= e.EMail %>
-                            </td>
-                            <td>
-                                <button id="copy-email-button-<%= index %>" onclick="copyValue('<%= e.EMail %>')">
-                                    <img id="copy-email-icon<%= index %>" src="Icons/copy.png" width="25" height="25">
-                                </button>
-                            </td>
-                            <td>
-                                <%= e.Nutzername %>
-                            </td>
-                            <td>
-                                <button id="copy-username-button-<%= index %>" onclick="copyValue('<%= e.Nutzername %>')">
-                                    <img id="copy-username-icon<%= index %>" src="Icons/copy.png" width="25" height="25">
-                                </button>
-                            </td>
-                            <td>
-                                ********
-                            </td>
-                            <td>
-                                <button id="copy-button-<%= index %>" onclick="copyValue('<%= e.Passwort %>')">
-                                    <img id="copy-icon-<%= index %>" src="Icons/copy.png" width="25" height="25">
-                                </button>
-                            </td>
+                            <th>Email</th>
+                            <th></th>
+                            <th>Nutzername</th>
+                            <th></th>
+                            <th>Passwort</th>
+                            <th></th>
                         </tr>
-                        <% }) %>
-                </tbody>
-            </table>
-        </div>
-    </section>
-    <script>
-        function copyValue(value) {
-            navigator.clipboard.writeText(value);
-        }
-    </script>
-</body>
+                    </thead>
+                    <tbody>
+                        <% password.forEach(function(e, index) { %>
+                            <tr>
+                                <td>
+                                    <%= e.EMail %>
+                                </td>
+                                <td>
+                                    <button id="copy-email-button-<%= index %>" onclick="copyValue('<%= e.EMail %>')">
+                                        <img id="copy-email-icon-<%= index %>" src="/Icons/copy.png" width="25" height="25">
+                                    </button>
+                                </td>
+                                <td>
+                                    <%= e.Nutzername %>
+                                </td>
+                                <td>
+                                    <button id="copy-username-button-<%= index %>" onclick="copyValue('<%= e.Nutzername %>')">
+                                        <img id="copy-username-icon-<%= index %>" src="/Icons/copy.png" width="25" height="25">
+                                    </button>
+                                </td>
+                                <td>
+                                    ********
+                                </td>
+                                <td>
+                                    <button id="copy-button-<%= index %>" onclick="copyValue('<%= e.Passwort %>')">
+                                        <img id="copy-icon-<%= index %>" src="/Icons/copy.png" width="25" height="25">
+                                    </button>
+                                </td>
+                            </tr>
+                            <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        <script>
+            function copyValue(value) {
+                navigator.clipboard.writeText(value);
+            }
+        </script>
+    </body>
 
-</html>
+    </html>
