@@ -473,7 +473,7 @@ app.post('/createPassword', isAuthenticated, async (req, res) => {
   });
 });
 
-app.post('/updatePassword', isAuthenticated, async (req, res) => {
+app.post('/editPassword', isAuthenticated, async (req, res) => {
   const { webSite, email, username, newPassword } = req.body;
 
   try {
