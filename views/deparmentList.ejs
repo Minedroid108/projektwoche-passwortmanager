@@ -1,25 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
-    <title>Abteilungsliste</title>
-    <script>
-        function toggleForm() {
-            var form = document.getElementById('add-department-form');
-            var addButton = document.getElementById('add-button');
-            if (form.style.display === 'none' || form.style.display === '') {
-                form.style.display = 'block';
-                addButton.style.display = 'none';
-            } else {
-                form.style.display = 'none';
-                addButton.style.display = 'block';
-            }
-        }
-    </script>
-</head>
+<%- include('../views/partials/head.ejs') %>
 <body>
+    <%- include('../views/partials/navbar.ejs') %>
     <section class="section">
         <div class="container">
             <h1 class="title"><img src="Icons/group.png" width="25" height="25"> Abteilungsliste</h1>
@@ -40,7 +21,11 @@
                         <td><%= e.quantityOfUser %></td>
                         <td>
                             <a href="/editDepartment/<%= e.Abteilungen %>"><img src="Icons/edit.png" width="25" height="25"></a>
-                            <a href=""><img src="Icons/trash.png" width="25" height="25"></a>
+                            <form action="/removeDepartment/<%= e.Abteilungen %>" method="POST" onsubmit="return confirm('Sind Sie sicher, dass Sie diese Abteilung löschen möchten?');">
+                                <button type="submit">
+                                  <img src="Icons/trash.png" width="25" height="25">
+                                </button>
+                              </form>
                         </td>
                     </tr>
                     <% }) %>
@@ -112,6 +97,18 @@
             newRow.appendChild(actionCell);
     
             table.appendChild(newRow);
+        }
+
+        function toggleForm() {
+            var form = document.getElementById('add-department-form');
+            var addButton = document.getElementById('add-button');
+            if (form.style.display === 'none' || form.style.display === '') {
+                form.style.display = 'block';
+                addButton.style.display = 'none';
+            } else {
+                form.style.display = 'none';
+                addButton.style.display = 'block';
+            }
         }
     </script>
 </body>

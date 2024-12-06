@@ -6,7 +6,12 @@ const bcrypt = require('bcrypt');
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const crypto = require('crypto');
+const { title } = require('process');
+const e = require('express');
+const dotenv = require('dotenv');
 
+
+dotenv.config();
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
 app.use(express.static('public'));
@@ -14,12 +19,12 @@ app.use(bodyParser.urlencoded({ limit: '5000mb', extended: true, parameterLimit:
 
 // Schlüssel und Initialisierungsvektor (IV) für die Verschlüsselung
 const algorithm = 'aes-256-cbc';
-const encryptionKey = 'b1b2b3b4b5b6b7b8b9b10b11b12b13b1';
+const encryptionKey = process.env.ENCRYPTION_KEY;
 const iv = crypto.randomBytes(16); // 16 Bytes für AES
 
 // Session configuration
 app.use(session({
-  secret: 'your-secret-key', // Ändern Sie dies in einen sicheren Schlüssel
+  secret: process.env.SECRET_KEY, // Ändern Sie dies in einen sicheren Schlüssel
   resave: false,
   saveUninitialized: true,
   cookie: { secure: false } // Setzen Sie secure auf true, wenn Sie HTTPS verwenden
@@ -27,10 +32,10 @@ app.use(session({
 
 // SQL Database connection
 const connection = mysql.createConnection({
-  host: '127.0.0.1',
-  user: 'root',
-  password: 'manager',
-  database: 'passwortmanager'
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_DATABASE
 });
 
 //Error handling
@@ -84,9 +89,18 @@ app.post('/login', async function (req, res) {
 
 //#region User DONE!
 
-app.get('/addUser', function (req, res) {
-  res.render('addUser', {
-    title: 'Nutzer anlegen'
+app.get('/addUser', isAuthenticated, (req, res) => {
+  const query = 'SELECT DISTINCT Abteilungen FROM abteilung';
+  connection.query(query, (error, results) => {
+    if (error) {
+      console.error('Error fetching departments:', error.stack);
+      res.status(500).send('Internal Server Error');
+      return;
+    }
+    res.render('addUser', { 
+      title: 'Nutzer anlegen',
+      abteilungen: results 
+    });
   });
 });
 
@@ -94,9 +108,15 @@ app.post('/addUser', isAuthenticated, function (req, res) {
   // to do: check if user already exists 
 
   // get passwords
-  const loginPasswort = req.body.loginPasswort;
-  const masterPasswort = req.body.masterPasswort;
+  const loginPasswort = req.body.LoginPasswort;
+  const masterPasswort = req.body.MasterPasswort;
   console.log(loginPasswort, masterPasswort);
+
+  if(req.body.IsAdmin == 'on') {
+    req.body.IsAdmin = 1;
+  } else {
+    req.body.IsAdmin = 0;
+  }
 
   // generate salt
   const saltRounds = 10;
@@ -116,15 +136,38 @@ app.post('/addUser', isAuthenticated, function (req, res) {
         const dateFormat = formatDate(date);
 
         // Insert user into database
-        const query = 'INSERT INTO user (Nutzername, LoginPasswort, MasterPasswort, Erstellungsdatum) VALUES (?, ?, ?, ?)';
-        const values = [req.body.username, loginPasswortHash, masterPasswortHash, dateFormat];
+        const query = 'INSERT INTO user (Vorname, Nachname, Nutzername, IsAdmin, LoginPasswort, MasterPasswort, CreateDate, UpdateDate) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+        const values = [req.body.Vorname, req.body.Nachname ,req.body.Nutzername, req.body.IsAdmin, loginPasswortHash, masterPasswortHash, dateFormat, dateFormat];
         connection.query(query, values, (err, results) => {
           if (err) {
             console.error('Error inserting user:', err.stack);
             res.status(500).send('Internal Server Error');
             return;
           }
-          res.redirect('/userlist');
+
+          const query = 'SELECT ID FROM user WHERE Nutzername = ?';
+          const values = [req.body.Nutzername];
+          connection.query(query, values, (err, results) => {
+            if (err) {
+              console.error('Error fetching user:', err.stack);
+              res.status(500).send('Internal Server Error');
+              return;
+            }
+
+            const userID = results[0].ID;
+
+            // Insert department into database
+            const abteilungQuery = 'INSERT INTO abteilung (Abteilungen, UserID) VALUES (?, ?)';
+            connection.query(abteilungQuery, [req.body.Abteilung, userID], (err, results) => {
+              if (err) {
+                console.error('Error inserting department:', err.stack);
+                res.status(500).send('Internal Server Error');
+                return;
+              } else {
+                res.redirect('/userlist');
+              }
+            });
+          });
         });
       });
     });
@@ -160,7 +203,7 @@ app.delete('/removeUser/:deparmentList/:username', isAuthenticated, (req, res) =
 
 //#endregion
 
-//#region Abteilungen
+//#region Abteilungen DONE!
 
 app.get('/deparmentList', isAuthenticated, (req, res) => {
   const query = 'SELECT Abteilungen, COUNT(UserID) AS quantityOfUser FROM abteilung GROUP BY Abteilungen';
@@ -170,7 +213,7 @@ app.get('/deparmentList', isAuthenticated, (req, res) => {
       res.status(500).send('Fehler bei der Abfrage');
       return;
     }
-    res.render('deparmentList', { deparmentLists: results });
+    res.render('deparmentList', { deparmentLists: results, title: 'Abteilungen' });
   });
 });
 
@@ -223,7 +266,7 @@ app.get('/editDepartment/:deparmentList', isAuthenticated, (req, res) => {
         return;
       }
       department.users = userResults;
-      res.render('editDepartment', { department });
+      res.render('editDepartment', { department, title: 'Abteilung bearbeiten'});
     });
   });
 });
@@ -246,11 +289,34 @@ app.post('/addDepartment', isAuthenticated, (req, res) => {
     res.redirect('/deparmentList');
   });
 });
+
+app.post('/removeDepartment/:departmentList', isAuthenticated, (req, res) => {
+  const departmentList = req.params.departmentList;
+
+  if (!departmentList) {
+    return res.status(400).send('Department list is required');
+  }
+
+  const query = 'DELETE FROM abteilung WHERE Abteilungen = ?';
+  connection.query(query, [departmentList], (err, results) => {
+    if (err) {
+      console.error('Fehler bei der Abfrage:', err);
+      return res.status(500).send('Fehler bei der Abfrage');
+    }
+
+    if (results.affectedRows === 0) {
+      return res.status(404).send('Abteilung nicht gefunden');
+    }
+
+    res.redirect('/deparmentList');
+  });
+});
+
 //#endregion
 
 //#region Einstellungen
 app.get('/companySettings', isAuthenticated, (req, res) => {
-  res.render('companySettings');
+  res.render('companySettings', { title: 'Firmeneinstellungen' });
 });
 
 //#endregion
@@ -270,7 +336,7 @@ app.get('/passwords', isAuthenticated, async (req, res) => {
       })
       resolve(passwords);
     }).then((passwords) => {
-      res.render('passwordView', { password: passwords });
+      res.render('passwordView', { password: passwords, title: 'Passwortverwaltung' });
     });
   } catch (error) {
     console.error('Error fetching passwords:', error.stack);
@@ -379,10 +445,10 @@ app.get('/accountView', isAuthenticated, async (req, res) => {
         throw err;
       }
       const user = result[0];
-      console.log(user)
       res.render('accountView', { 
         user: user, 
-        abteilungen: abteilungen
+        abteilungen: abteilungen,
+        title: 'Account Übersicht'
       });
     });
   } catch (error) {
@@ -393,19 +459,64 @@ app.get('/accountView', isAuthenticated, async (req, res) => {
 
 app.post('/accountView', isAuthenticated, async (req, res) => {
   const userId = req.session.user; // Assuming you have user ID in req.user
-  const { vorname, nachname, password, masterPassword } = req.body;
+  const { vorname, nachname, oldPassword, newPassword, confirmNewPassword, oldMasterPassword, newMasterPassword, confirmNewMasterPassword } = req.body;
 
-  const hashedPassword = password ? await bcrypt.hash(password, 10) : null;
-  const hashedMasterPassword = masterPassword ? await bcrypt.hash(masterPassword, 10) : null;
+  let query = 'UPDATE User SET Vorname = ?, Nachname = ?';
+  const values = [vorname, nachname];
 
-  const query = 'UPDATE User SET Vorname = ?, Nachname = ?, LoginPasswort = ?, MasterPasswort = ?';
-  const values = [vorname, nachname, hashedPassword, hashedMasterPassword, department, userId];
+  if (newPassword && newPassword === confirmNewPassword) {
+    try {
+      // Fetch the current password hash from the database
+      const [rows] = await connection.promise().query('SELECT LoginPasswort FROM User WHERE ID = ?', [userId]);
+      const user = rows[0];
+
+      // Compare the old password with the current password hash
+      const match = await bcrypt.compare(oldPassword, user.LoginPasswort);
+      if (!match) {
+        return res.status(400).send('Das alte Passwort ist falsch.');
+      }
+
+      // Hash the new password and update it in the database
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      query += ', LoginPasswort = ?';
+      values.push(hashedPassword);
+      console.log('Password hashed successfully');
+    } catch (err) {
+      console.error('Error hashing password:', err);
+      return res.status(500).send('Internal Server Error');
+    }
+  }
+
+  if (newMasterPassword && newMasterPassword === confirmNewMasterPassword) {
+    try {
+      // Fetch the current master password hash from the database
+      const [rows] = await connection.promise().query('SELECT MasterPasswort FROM User WHERE ID = ?', [userId]);
+      const user = rows[0];
+
+      // Compare the old master password with the current master password hash
+      const match = await bcrypt.compare(oldMasterPassword, user.MasterPasswort);
+      if (!match) {
+        return res.status(400).send('Das alte Master-Passwort ist falsch.');
+      }
+
+      // Hash the new master password and update it in the database
+      const hashedMasterPassword = await bcrypt.hash(newMasterPassword, 10);
+      query += ', MasterPasswort = ?';
+      values.push(hashedMasterPassword);
+      console.log('Master password hashed successfully');
+    } catch (err) {
+      console.error('Error hashing master password:', err);
+      return res.status(500).send('Internal Server Error');
+    }
+  }
+
+  query += ' WHERE ID = ?';
+  values.push(userId);
 
   connection.query(query, values, (err, result) => {
     if (err) {
       console.error('Error updating user:', err.stack);
-      res.status(500).send('Internal Server Error');
-      return;
+      return res.status(500).send('Internal Server Error');
     }
     res.redirect('/accountView');
   });
@@ -470,6 +581,20 @@ function decrypt(text) {
 
 //#endregion
 
+//#region 
+
+app.get('/logout', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('Error during logout:', err.stack);
+      res.status(500).send('Internal Server Error');
+      return;
+    }
+    res.redirect('/');
+  });
+});
+
+//#endregion
 app.listen(3000, () => {
   console.log('Server läuft auf Port 3000');
 });

@@ -1,26 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
-    <title>Abteilung bearbeiten</title>
-    <script>
-        function removeUser(department, username) {
-            fetch(`/removeUser/${department}/${username}`, {
-                method: 'DELETE'
-            })
-            .then(response => {
-                if (response.ok) {
-                    location.reload();
-                } else {
-                    alert('Fehler beim Entfernen des Benutzers');
-                }
-            });
-        }
-    </script>
-</head>
+<%- include('../views/partials/head.ejs') %>
 <body>
+    <%- include('../views/partials/navbar.ejs') %>
     <section class="section">
         <div class="container">
             <h1 class="title"><img src="/Icons/group.png" width="25" height="25"> Abteilung bearbeiten: <%= department.deparmentList %></h1>
@@ -51,5 +31,19 @@
             <a href="/deparmentList" class="button is-link">Zurück zur Abteilungsliste</a>
         </div>
     </section>
+    <script>
+        function removeUser(department, username) {
+            fetch(`/removeUser/${department}/${username}`, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Fehler beim Entfernen des Benutzers');
+                }
+            });
+        }
+    </script>
 </body>
 </html>

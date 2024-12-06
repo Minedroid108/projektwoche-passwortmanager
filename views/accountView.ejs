@@ -1,12 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
-    <title>Account Übersicht</title>
-</head>
+<%- include('../views/partials/head.ejs') %>
 <body>
+    <%- include('../views/partials/navbar.ejs') %>
     <section class="section">
         <div class="container">
             <div class="columns is-centered">
@@ -52,7 +46,7 @@
                                 <div class="field-body">
                                     <div class="field is-flex">
                                         <div class="control">
-                                            <input class="input" type="password" name="password" value="********" readonly>
+                                            <input class="input" type="password" name="password" placeholder="********" readonly>
                                         </div>
                                         <span class="icon" id="edit-password-icon"><img src="Icons/edit.png"></span>
                                     </div>
@@ -61,7 +55,7 @@
                             <div id="password-change-form" style="display: none;">
                                 <div class="field is-horizontal">
                                     <div class="field-label is-normal">
-                                        <label class="label">Altes Passwort eingeben</label>
+                                        <label class="label">Altes Passwort</label>
                                     </div>
                                     <div class="field-body">
                                         <div class="field is-flex">
@@ -96,7 +90,6 @@
                                     </div>
                                 </div>
                             </div>
-                            <h1 class="title">Passwortmanagereinstellungen</h1>
                             <div class="field is-horizontal">
                                 <div class="field-label is-normal">
                                     <label class="label">Master-Passwort</label>
@@ -104,7 +97,7 @@
                                 <div class="field-body">
                                     <div class="field is-flex">
                                         <div class="control">
-                                            <input class="input" type="password" name="masterPassword" value="********" readonly>
+                                            <input class="input" type="password" name="masterPassword" placeholder="********" readonly>
                                         </div>
                                         <span class="icon" id="edit-master-password-icon"><img src="Icons/edit.png"></span>
                                     </div>
@@ -113,7 +106,7 @@
                             <div id="master-password-change-form" style="display: none;">
                                 <div class="field is-horizontal">
                                     <div class="field-label is-normal">
-                                        <label class="label">Altes Masterpasswort eingeben</label>
+                                        <label class="label">Altes Master-Passwort</label>
                                     </div>
                                     <div class="field-body">
                                         <div class="field is-flex">
@@ -125,7 +118,7 @@
                                 </div>
                                 <div class="field is-horizontal">
                                     <div class="field-label is-normal">
-                                        <label class="label">Neues Masterpasswort eingeben</label>
+                                        <label class="label">Neues Master-Passwort eingeben</label>
                                     </div>
                                     <div class="field-body">
                                         <div class="field is-flex">
@@ -137,7 +130,7 @@
                                 </div>
                                 <div class="field is-horizontal">
                                     <div class="field-label is-normal">
-                                        <label class="label">Neues Masterpasswort bestätigen</label>
+                                        <label class="label">Neues Master-Passwort bestätigen</label>
                                     </div>
                                     <div class="field-body">
                                         <div class="field is-flex">
@@ -147,26 +140,6 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            <% var i = 0; %>
-                            <% abteilungen.forEach(function(abteilung) { %>
-                                <% if (abteilung.UserID == user.ID) { %>
-                            <div class="field is-horizontal">
-                                <div class="field-label is-normal">
-                                    <label class="label" <% if(i!=0) { %>style="display: none;"<% } %>>Abteilung</label>
-                                </div>
-                                <div class="field-body">
-                                    <div class="field is-flex">
-                                        <div class="control">
-                                            <input class="input" type="text" name="department" value="<%= abteilung.Abteilungen %>" readonly>
-                                        </div>
-                                        <span class="icon" id="edit-department-icon"><img src="Icons/edit.png"></span>
-                                    </div>
-                                </div>
-                            </div> 
-                                    <% i++; %>
-                                <% } %>
-                            <% }) %>
                             </div>
                             <div id="save-button-container" style="display: none; text-align: center; margin-top: 20px;">
                                 <button class="button is-primary" id="save-button">Speichern</button>
@@ -180,11 +153,6 @@
     <script>
         function showSaveButton() {
             document.getElementById('save-button-container').style.display = 'block';
-        }
-
-        function validatePassword(password) {
-            const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{4,}$/;
-            return regex.test(password);
         }
 
         document.getElementById('edit-vorname-icon').addEventListener('click', function() {
@@ -221,45 +189,37 @@
             showSaveButton();
         });
 
-        document.getElementById('edit-department-icon').addEventListener('click', function() {
-            var departmentInput = document.querySelector('input[name="department"]');
-            departmentInput.removeAttribute('readonly');
-            departmentInput.focus();
-            showSaveButton();
-        });
-
         document.getElementById('save-button').addEventListener('click', function(event) {
+            var oldPassword = document.querySelector('input[name="oldPassword"]').value;
             var newPassword = document.querySelector('input[name="newPassword"]').value;
             var confirmNewPassword = document.querySelector('input[name="confirmNewPassword"]').value;
+            var oldMasterPassword = document.querySelector('input[name="oldMasterPassword"]').value;
             var newMasterPassword = document.querySelector('input[name="newMasterPassword"]').value;
             var confirmNewMasterPassword = document.querySelector('input[name="confirmNewMasterPassword"]').value;
 
-            if (newPassword && !validatePassword(newPassword)) {
-                alert('Das neue Passwort muss mindestens 4 Zeichen lang sein und Groß- und Kleinbuchstaben, Ziffern und Sonderzeichen enthalten.');
+            if (!oldPassword && newPassword) {
+                alert('Bitte geben Sie Ihr altes Passwort ein.');
                 event.preventDefault();
                 return;
             }
 
-            if (newPassword !== confirmNewPassword) {
+            if (newPassword && newPassword !== confirmNewPassword) {
                 alert('Die neuen Passwörter stimmen nicht überein.');
                 event.preventDefault();
                 return;
             }
 
-            if (newMasterPassword && !validatePassword(newMasterPassword)) {
-                alert('Das neue Masterpasswort muss mindestens 4 Zeichen lang sein und Groß- und Kleinbuchstaben, Ziffern und Sonderzeichen enthalten.');
+            if (!oldMasterPassword && newMasterPassword) {
+                alert('Bitte geben Sie Ihr altes Master-Passwort ein.');
                 event.preventDefault();
                 return;
             }
 
-            if (newMasterPassword !== confirmNewMasterPassword) {
-                alert('Die neuen Masterpasswörter stimmen nicht überein.');
+            if (newMasterPassword && newMasterPassword !== confirmNewMasterPassword) {
+                alert('Die neuen Master-Passwörter stimmen nicht überein.');
                 event.preventDefault();
                 return;
             }
-
-            // Hier können Sie den Code hinzufügen, um die Daten zu speichern
-            alert('Daten erfolgreich gespeichert!');
         });
     </script>
 </body>
