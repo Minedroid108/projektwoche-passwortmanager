@@ -15,6 +15,7 @@ dotenv.config();
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
 app.use(express.static('public'));
+app.use(express.json());
 app.use(bodyParser.urlencoded({ limit: '5000mb', extended: true, parameterLimit: 100000000000 }));
 
 // Schlüssel und Initialisierungsvektor (IV) für die Verschlüsselung
@@ -50,17 +51,22 @@ connection.connect((err) => {
 //#region Login DONE!
 
 app.get('/', function (req, res) {
-  res.render('login', {
-    title: 'Login'
-  });
+  if (req.session.user) {
+    res.redirect('companySettings');
+  } else {
+    res.render('login', {
+      title: 'Login'
+    });
+  }
 });
 
 app.post('/login', async function (req, res) {
   const username = req.body.username;
   const password = req.body.password;
+  const fromPlugin = req.body.fromPlugin;
 
   try {
-    const queryUsername = "SELECT ID, LoginPasswort FROM user WHERE Nutzername = ?";
+    const queryUsername = "SELECT ID, LoginPasswort, Vorname, Nachname, Nutzername, IsAdmin FROM user WHERE Nutzername = ?";
     const valuesUsername = [username];
     const results = await executeSQL(queryUsername, valuesUsername);
 
@@ -69,13 +75,21 @@ app.post('/login', async function (req, res) {
     }
 
     const user = results[0];
+    console.log(user)
     const passwordHash = user.LoginPasswort;
 
     const isMatch = await bcrypt.compare(password, passwordHash);
     if (isMatch) {
       req.session.user = user.ID; // Speichern Sie Benutzerdaten in der Session
-      console.log('Login erfolgreich, Benutzer-ID:', user.ID);
-      res.redirect('/passwords'); // Weiterleitung zur passwordView-Seite
+      req.session.username = user.Nutzername;
+      req.session.fullName = `${user.Vorname} ${user.Nachname}`;
+      req.session.isAdmin = user.IsAdmin;
+      if (fromPlugin) {
+        res.redirect('/pluginLoggedInView');
+      } else {
+        console.log('Login erfolgreich, Benutzer-ID:', user.ID);
+        res.redirect('/passwords'); // Weiterleitung zur passwordView-Seite
+      }
     } else {
       res.send('Falsches Passwort');
     }
@@ -85,6 +99,55 @@ app.post('/login', async function (req, res) {
   }
 });
 
+//#endregion
+
+//#region Plugin
+app.get('/pluginlogin', (req, res) => {
+  if (req.session.user) {
+    res.redirect('pluginLoggedInView');
+  } else {
+    res.render('pluginlogin', {
+      title: 'Login'
+    });
+  }
+});
+
+app.get('/pluginLoggedInView', (req, res) => {
+  res.render('pluginLoggedInView', {
+    title: "Logged In",
+    username: req.session.username,
+    fullName: req.session.fullName,
+    isAdmin: req.session.isAdmin
+  })
+});
+
+app.post('/checkForWebsite', (req, res) => {
+  if (!req.session.user) {
+    res.status(403).send('Not logged in');
+    return;
+  }
+
+  const { site } = req.body;
+
+  const query = "SELECT webseite, UserID FROM userlogindata WHERE UserID = ? AND webseite = ?";
+  const values = [req.session.user, site];
+  connection.query(query, values, (err, results) => {
+    if (err) {
+      console.log(`Error executing query: ${err}`);
+      res.status(500).send('Internal Server Error');
+      return;
+    }
+
+    for (let i = 0; i < results.length; i++) {
+      const loginData = results[i];
+      if (loginData.webseite === site) {
+        res.status(200).send('Anmeldedaten vorhanden!');
+        return;
+      }
+    }
+    res.status(404).send('Keine Anmeldedaten gefunden!');
+  });
+})
 //#endregion
 
 //#region User DONE!
@@ -347,14 +410,14 @@ app.get('/passwords', isAuthenticated, async (req, res) => {
 app.get('/editPasswords', isAuthenticated, (req, res) => {
   const { index, webseite, EMail, Nutzername, Passwort } = req.query;
   const password = [{
-      webSite: webseite,
-      email: EMail,
-      username: Nutzername,
-      password: Passwort
+    webSite: webseite,
+    email: EMail,
+    username: Nutzername,
+    password: Passwort
   }];
   const title = 'Gespeichertes Passwort bearbeiten';
-  res.render('editPasswords', { 
-    password, 
+  res.render('editPasswords', {
+    password,
     title,
     targetLink: '/editPassword'
   });
@@ -364,13 +427,13 @@ app.get('/createPassword', isAuthenticated, async (req, res) => {
   const { webseite, EMail, Nutzername, Passwort } = req.query;
   const title = 'Neues Passwort erstellen';
   const password = [{
-      webSite: webseite,
-      email: EMail,
-      username: Nutzername,
-      password: Passwort
+    webSite: webseite,
+    email: EMail,
+    username: Nutzername,
+    password: Passwort
   }];
-  res.render('editPasswords', { 
-    password, 
+  res.render('editPasswords', {
+    password,
     title,
     targetLink: '/createPassword',
     userID: req.session.user

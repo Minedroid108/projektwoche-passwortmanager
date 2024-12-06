@@ -51,22 +51,23 @@ function checkForLogin() {
     }
 
     // Prüfen, ob Anmeldedaten für die aktuelle Seite gespeichert sind
-    var loginAvailable = true;
-    var loggedIn = true;
-    if (!loggedIn) {
-        browser.browserAction.setPopup({
-            popup: "./popup_login.html"
-        });
-    } else if (loginAvailable) {
-        browser.runtime.sendMessage("notify-login-available");
-        browser.browserAction.setPopup({
-            popup: "./popup_data_available.html"
-        });
-    } else {
-        browser.browserAction.setPopup({
-            popup: "./popup_logged_in.html"
-        });
-    }
+    const site = window.location.hostname;
+    fetch("http://localhost:3000/checkForWebsite", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            site: site
+        })
+    }).then((res) => {
+        console.log(res);
+        if (res.status == 200) {
+            browser.runtime.sendMessage("login-available");
+        } else {
+            browser.runtime.sendMessage("login-unavailable");
+        }
+    });
 }
 
 window.addEventListener("load", checkForLogin);
