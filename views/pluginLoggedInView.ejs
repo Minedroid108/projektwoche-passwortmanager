@@ -1,21 +1,19 @@
 <%- include('../views/partials/head.ejs') %>
 
     <body>
-        <section class="hero is-link">
-            <div class="hero-body">
-                <p class="title">
-                    <%= fullName %>
-                        <% if (isAdmin) { %> <span class="tag">Admin</span>
-                            <% } %>
-                </p>
-                <p class="subtitle">
-                    <%= username %>
-                </p>
+        <div class="notification">
+            <p class="title is-4">
+                <%= fullName %>
+                    <% if (isAdmin) { %> <span class="tag">Admin</span>
+                        <% } %>
+            </p>
+            <p class="subtitle">
+                <%= username %>
+            </p>
+            <div class="buttons">
+                <a href="http://localhost:3000" target="_blank"><button class="button is-link" id="dashboard-button">Zum Dashboard</button></a>
+                <a href="/logout"><button class="button is-danger is-outlined" id="logout-button">Abmelden</button></a>
             </div>
-        </section>
-        <section class="buttons">
-            <a href="http://localhost:3000" target="_blank"><button class="button is-link" id="dashboard-button">Zum Dashboard</button></a>
-            <a href="http://localhost:3000" target="_blank"><button class="button is-danger is-outlined" id="dashboard-button">Abmelden</button></a>
-        </section>
-        <script src="./popup_logged_in.js"></script>
+        </div>
     </body>
+</html>

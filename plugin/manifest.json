@@ -7,17 +7,7 @@
         "notifications",
         "webRequest",
         "tabs",
-        "*://localhost/*"
-    ],
-    "content_scripts": [
-        {
-            "matches": [
-                "<all_urls>"
-            ],
-            "js": [
-                "./autofill.js"
-            ]
-        }
+        "<all_urls>"
     ],
     "background": {
         "scripts": [

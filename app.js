@@ -120,7 +120,7 @@ app.get('/pluginlogin', (req, res) => {
   }
 });
 
-app.get('/pluginLoggedInView', (req, res) => {
+app.get('/pluginLoggedInView', isAuthenticated, (req, res) => {
   res.render('pluginLoggedInView', {
     title: "Logged In",
     username: req.session.username,
